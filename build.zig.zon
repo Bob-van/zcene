@@ -1,0 +1,22 @@
+.{
+    .name = .zcene,
+    .version = "0.0.1",
+    .fingerprint = 0xd4698dab6c767966,
+    .minimum_zig_version = "0.15.2",
+    .dependencies = .{
+        .raylib = .{
+            .url = "git+https://github.com/raysan5/raylib#78a607b778cb806818c8a66d06190dc3548f3786",
+            .hash = "raylib-5.6.0-dev-whq8uHRjyARJNFHTJ8fBtYU71IrnB-rTHJwuasjUnRWt",
+        },
+        //.xcode_frameworks = .{ //TO DO: do i need it? (build.zig in raylib has it now, test using it!)
+        //    .url = "git+https://github.com/hexops/xcode-frameworks#9a45f3ac977fd25dff77e58c6de1870b6808c4a7",
+        //    .hash = "N-V-__8AABHMqAWYuRdIlflwi8gksPnlUMQBiSxAqQAAZFms",
+        //    .lazy = true,
+        //},
+    },
+    .paths = .{
+        "src",
+        "build.zig",
+        "build.zig.zon",
+    },
+}
