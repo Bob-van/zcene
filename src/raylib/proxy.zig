@@ -2790,7 +2790,7 @@ pub fn getMonitorRefreshRate(monitor: i32) i32 {
 
 /// Get window position XY on monitor
 pub fn getWindowPosition() Vector2 {
-    return cdef.GetWindowPosition();
+    return @bitCast(cdef.GetWindowPosition());
 }
 
 /// Get window scale DPI factor

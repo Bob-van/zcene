@@ -19,7 +19,6 @@ pub fn FnTable(Renderer: type) type {
         window: fn () *const Window,
         preset_size: usize,
         activePresetIndex: fn () usize,
-        setLogLevel: fn (TraceLogLevel) void,
         init: fn ([:0]const u8, ?u31) void,
         deinit: fn () void,
         initialRender: fn (Renderer.Context, Renderer.AccessEnum) error{SceneInitFailed}!void,
@@ -54,10 +53,6 @@ pub fn API(Renderer: type) type {
         /// Get index of preset currently in use by renderer.
         pub fn activePresetIndex() usize {
             return table.activePresetIndex();
-        }
-        /// Sets log level of backing engine (Raylib currently).
-        pub fn setLogLevel(level: TraceLogLevel) void {
-            table.setLogLevel(level);
         }
         /// Initializes window using provided title and fps cap.
         ///

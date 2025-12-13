@@ -57,7 +57,6 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
             .window = getWindow,
             .preset_size = presets.len,
             .activePresetIndex = getCurrentPresetIndex,
-            .setLogLevel = setLogLevel,
             .init = init,
             .deinit = deinit,
             .initialRender = initialRender,
@@ -127,11 +126,12 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
             return current_preset_id;
         }
 
-        fn setLogLevel(logLevel: engine.TraceLogLevel) void {
-            engine.setTraceLogLevel(logLevel);
-        }
-
         fn init(window_title: [:0]const u8, fps: ?u31) void {
+            if (builtin.mode == .Debug) {
+                engine.setTraceLogLevel(.warning);
+            } else {
+                engine.setTraceLogLevel(.err);
+            }
             // open minimalized game window
             engine.initWindow(1, 1, window_title);
             // remember that window was opened
@@ -151,19 +151,31 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
                 break :blk if (refresh_rate < 60) 60 else @intCast(refresh_rate);
             };
             log("Renderer targetting {} FPS\n", .{cap});
-            // allow resizeability
-            engine.setWindowState(.{ .window_resizable = true, .window_always_run = true });
+
             // compute param for removal of repeating non 0 cost calls
             const window_width = @divFloor(screen_width, 4);
             // compute param for removal of repeating non 0 cost calls
             const window_height = @divFloor(screen_height, 4);
+
             // move window
             engine.setWindowPosition(window_width, window_height);
-            // rescale window
-            engine.setWindowSize(
-                window_width * 2,
-                window_height * 2,
-            );
+
+            const position = engine.getWindowPosition();
+
+            if (position.x == 0 or position.y == 0) {
+                // ugly hack for Wayland
+                engine.closeWindow();
+                engine.initWindow(window_width * 2, window_height * 2, window_title);
+            } else {
+                // rescale window
+                engine.setWindowSize(
+                    window_width * 2,
+                    window_height * 2,
+                );
+            }
+
+            // allow resizeability
+            engine.setWindowState(.{ .window_resizable = true, .window_always_run = true });
             // set prefered gameloop speed
             requestFpsCapUpdate(cap);
             // open audio device

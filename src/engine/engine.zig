@@ -324,3 +324,7 @@ pub fn setWindowTitle(title: [:0]const u8) void {
 pub fn imageDrawLineEx(dst: *Image, start: Vector2, end: Vector2, thick: i32, color: Color) void {
     rlib.imageDrawLineEx(dst, start, end, thick, color);
 }
+
+pub fn getWindowPosition() Vector2 {
+    return rlib.getWindowPosition();
+}
