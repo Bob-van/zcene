@@ -2234,7 +2234,7 @@ pub fn loadTextureCubemap(image: Image, layout: CubemapLayout) RaylibError!Textu
 pub fn loadRenderTexture(width: i32, height: i32) RaylibError!RenderTexture2D {
     const render_texture = cdef.LoadRenderTexture(@as(c_int, width), @as(c_int, height));
     const isValid = cdef.IsRenderTextureValid(render_texture);
-    return if (isValid) render_texture else RaylibError.LoadRenderTexture;
+    return if (isValid) @bitCast(render_texture) else RaylibError.LoadRenderTexture;
 }
 
 pub fn colorToInt(color: Color) i32 {
@@ -2895,7 +2895,7 @@ pub fn endMode3D() void {
 
 /// Begin drawing to render texture
 pub fn beginTextureMode(target: RenderTexture2D) void {
-    cdef.BeginTextureMode(target);
+    cdef.BeginTextureMode(@bitCast(target));
 }
 
 /// Ends drawing to render texture
@@ -3630,7 +3630,7 @@ pub fn drawLineV(startPos: Vector2, endPos: Vector2, color: Color) void {
 
 /// Draw a line (using triangles/quads)
 pub fn drawLineEx(startPos: Vector2, endPos: Vector2, thick: f32, color: Color) void {
-    cdef.DrawLineEx(startPos, endPos, thick, color);
+    cdef.DrawLineEx(@bitCast(startPos), @bitCast(endPos), @bitCast(thick), @bitCast(color));
 }
 
 /// Draw line segment cubic-bezier in-out interpolation
@@ -4251,7 +4251,7 @@ pub fn isRenderTextureValid(target: RenderTexture2D) bool {
 
 /// Unload render texture from GPU memory (VRAM)
 pub fn unloadRenderTexture(target: RenderTexture2D) void {
-    cdef.UnloadRenderTexture(target);
+    cdef.UnloadRenderTexture(@bitCast(target));
 }
 
 /// Update GPU texture with new data (pixels should be able to fill texture)
@@ -4296,7 +4296,7 @@ pub fn drawTextureEx(texture: Texture2D, position: Vector2, rotation: f32, scale
 
 /// Draw a part of a texture defined by a rectangle
 pub fn drawTextureRec(texture: Texture2D, source: Rectangle, position: Vector2, tint: Color) void {
-    cdef.DrawTextureRec(texture, source, position, tint);
+    cdef.DrawTextureRec(@bitCast(texture), @bitCast(source), @bitCast(position), @bitCast(tint));
 }
 
 /// Draw a part of a texture defined by a rectangle with 'pro' parameters

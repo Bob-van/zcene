@@ -3,6 +3,7 @@ const builtin = @import("builtin");
 
 pub const Vector2 = rlib.Vector2;
 pub const Texture2D = rlib.Texture2D;
+pub const RenderTexture2D = rlib.RenderTexture2D;
 pub const Rectangle = rlib.Rectangle;
 pub const Color = rlib.Color;
 pub const Font = rlib.Font;
@@ -161,6 +162,10 @@ pub fn unloadTexture(texture: Texture2D) void {
 /// Draw a Texture2D with position defined as Vector2
 pub fn drawTextureV(texture: Texture2D, position: Vector2, tint: Color) void {
     rlib.drawTextureV(texture, position, tint);
+}
+
+pub fn drawTextureRec(texture: Texture2D, source: Rectangle, position: Vector2, tint: Color) void {
+    rlib.drawTextureRec(texture, source, position, tint);
 }
 
 /// Begin blending mode (alpha, additive, multiplied, subtract, custom)
@@ -325,6 +330,23 @@ pub fn imageDrawLineEx(dst: *Image, start: Vector2, end: Vector2, thick: i32, co
     rlib.imageDrawLineEx(dst, start, end, thick, color);
 }
 
+pub fn drawLineEx(start: Vector2, end: Vector2, thick: f32, color: Color) void {
+    rlib.drawLineEx(start, end, thick, color);
+}
+
 pub fn getWindowPosition() Vector2 {
     return rlib.getWindowPosition();
+}
+
+// Load texture for rendering (framebuffer)
+pub fn loadRenderTexture(width: i32, height: i32) !RenderTexture2D {
+    return rlib.loadRenderTexture(width, height);
+}
+
+pub fn beginTextureMode(target: RenderTexture2D) void {
+    rlib.beginTextureMode(target);
+}
+
+pub fn endTextureMode() void {
+    rlib.endTextureMode();
 }

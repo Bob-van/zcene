@@ -20,18 +20,15 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
         }
         break :blk intervals;
     };
-    const does_it_ever_update: bool = blk: {
+    const does_it_ever_update: bool =
         for (scenes) |renderableScene| {
-            if (renderableScene.updates_per_s != 0) break :blk true;
-        }
-        break :blk false;
-    };
-    const does_it_ever_run_lazy: bool = blk: {
+            if (renderableScene.updates_per_s != 0) break true;
+        } else false;
+
+    const does_it_ever_run_lazy: bool =
         for (scenes) |renderableScene| {
-            if (renderableScene.style == .lazy) break :blk true;
-        }
-        break :blk false;
-    };
+            if (renderableScene.style == .lazy) break true;
+        } else false;
 
     return struct {
         /// Context type that functions take and gets passed to the scenes
@@ -111,6 +108,7 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
 
         var last_update_micro: if (does_it_ever_update) i64 else void = undefined;
         var updates_without_change: if (does_it_ever_run_lazy) u2 else void = undefined;
+        var lazy_texture: if (does_it_ever_run_lazy) engine.RenderTexture2D else void = undefined;
 
         fn log(comptime fmt: []const u8, args: anytype) void {
             if (builtin.mode == .Debug) {
@@ -251,14 +249,39 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
                     inline else => |tag| {
                         const preset = scenes[@intFromEnum(tag)];
                         if (comptime preset.style == .lazy) {
-                            if (!@field(scene, preset.name).shouldRender(context)) {
-                                if (updates_without_change == 1) return;
-                                updates_without_change += 1;
-                            } else {
+                            if (@field(scene, preset.name).shouldRender(context)) {
                                 updates_without_change = 0;
+                            } else {
+                                if (updates_without_change == 1) {
+                                    engine.drawTextureRec(
+                                        lazy_texture.texture,
+                                        .init(0, 0, @floatFromInt(window.real_width), @floatFromInt(-window.real_height)),
+                                        .init(0, 0),
+                                        .white,
+                                    );
+                                    @field(scene, preset.name).final(context) catch return error.SceneRenderFailed;
+                                    return;
+                                }
+                                updates_without_change += 1;
                             }
                         }
-                        @field(scene, preset.name).render(context) catch return error.SceneRenderFailed;
+                        if (comptime preset.style == .lazy) engine.beginTextureMode(lazy_texture);
+
+                        @field(scene, preset.name).render(context) catch {
+                            if (comptime preset.style == .lazy) engine.endTextureMode();
+                            return error.SceneRenderFailed;
+                        };
+
+                        if (comptime preset.style == .lazy) {
+                            engine.endTextureMode();
+                            engine.drawTextureRec(
+                                lazy_texture.texture,
+                                .init(0, 0, @floatFromInt(window.real_width), @floatFromInt(-window.real_height)),
+                                .init(0, 0),
+                                .white,
+                            );
+                        }
+                        if (comptime preset.style == .lazy) @field(scene, preset.name).final(context) catch return error.SceneRenderFailed;
                     },
                 }
             }
@@ -336,6 +359,12 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
                 window.real_width = curr_width;
                 window.real_height = curr_height;
                 calculateInnerWindow();
+                if (comptime does_it_ever_run_lazy) {
+                    if (comptime scene_exists) {
+                        lazy_texture.unload();
+                    }
+                    lazy_texture = engine.loadRenderTexture(window.real_width, window.real_height) catch return error.SceneInitFailed;
+                }
             }
             if (comptime scene_exists) {
                 sceneUnload(context);
