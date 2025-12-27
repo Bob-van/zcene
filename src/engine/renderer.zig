@@ -57,7 +57,7 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
             .init = init,
             .deinit = deinit,
             .initialRender = initialRender,
-            .sceneUnload = sceneUnload,
+            .sceneUnload = publicSceneUnload,
             .render = render,
             .shouldWindowClose = wasWindowClosed,
             .requestNextScene = requestNextScene,
@@ -189,7 +189,7 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
             window_opened = false;
 
             if (engine.getLoaded() != 0) {
-                log("Renderer was left with {} loaded assets on exit!", .{engine.getLoaded()});
+                log("Renderer was left with {} loaded assets on exit!\n", .{engine.getLoaded()});
                 if (builtin.mode == .Debug) unreachable;
             }
         }
@@ -203,6 +203,17 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
         fn initialRender(context: Context, starting_scene: AccessEnum) error{SceneInitFailed}!void {
             next_scene = starting_scene;
             if (!try update(context, false)) @panic("TO DO: determine behavior on init when window is minimalized.");
+        }
+
+        fn publicSceneUnload(context: Context) void {
+            if (comptime does_it_ever_run_lazy) {
+                engine.unloadRenderTexture(lazy_texture);
+            }
+            switch (current_scene) {
+                inline else => |tag| {
+                    @field(scene, scenes[@intFromEnum(tag)].name).deinit(context);
+                },
+            }
         }
 
         fn sceneUnload(context: Context) void {
@@ -361,7 +372,7 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
                 calculateInnerWindow();
                 if (comptime does_it_ever_run_lazy) {
                     if (comptime scene_exists) {
-                        lazy_texture.unload();
+                        engine.unloadRenderTexture(lazy_texture);
                     }
                     lazy_texture = engine.loadRenderTexture(window.real_width, window.real_height) catch return error.SceneInitFailed;
                 }

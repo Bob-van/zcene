@@ -35,11 +35,9 @@ pub fn Scene(comptime componentList: []const SceneComponent) type {
         pub const ComponentAccessEnum = AccessEnum;
         pub const ComponentStorageStruct = StorageStruct;
 
-        pub fn init() @This() {
-            return .{
-                .items = undefined,
-            };
-        }
+        pub const empty: @This() = .{
+            .items = undefined,
+        };
 
         pub fn get(self: *@This(), comptime element: AccessEnum) *Types[@intFromEnum(element)] {
             return &@field(self.items, componentList[@intFromEnum(element)].name);

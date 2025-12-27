@@ -53,6 +53,7 @@ pub fn Init(comptime presets: []const ScreenPreset, comptime scenes: []const Ren
             pub const Rectangle = @import("gui-components/UiRectangle.zig").UiRectangle(Renderer);
             pub const Border = @import("gui-components/UiBorder.zig").UiBorder(Renderer);
             pub const Text = @import("gui-components/UiText.zig").UiText(Renderer);
+            pub const TextBounded = @import("gui-components/UiTextBounded.zig").UiTextBounded(Renderer);
             pub const Image = @import("gui-components/UiImage.zig").UiImage(Renderer);
             pub const Button = @import("gui-components/UiButton.zig").UiButton(Renderer);
             pub const SliderHandle = @import("gui-components/UiSliderHandle.zig").UiSliderHandle(Renderer);

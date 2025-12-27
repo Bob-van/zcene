@@ -340,7 +340,13 @@ pub fn getWindowPosition() Vector2 {
 
 // Load texture for rendering (framebuffer)
 pub fn loadRenderTexture(width: i32, height: i32) !RenderTexture2D {
+    loaded += 1;
     return rlib.loadRenderTexture(width, height);
+}
+
+pub fn unloadRenderTexture(self: RenderTexture2D) void {
+    loaded -= 1;
+    rlib.unloadRenderTexture(self);
 }
 
 pub fn beginTextureMode(target: RenderTexture2D) void {

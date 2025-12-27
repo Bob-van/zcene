@@ -90,7 +90,8 @@ pub fn UiButton(comptime Renderer: type) type {
             );
         }
 
-        pub fn checkForHover(self: *@This(), mouse: engine.Vector2) void {
+        pub fn checkForHover(self: *@This(), mouse: engine.Vector2) bool {
+            const tmp = self.hovered;
             self.hovered = if (engine.checkCollisionPointRec(
                 mouse,
                 .{
@@ -103,6 +104,7 @@ pub fn UiButton(comptime Renderer: type) type {
                 true
             else
                 false;
+            return tmp != self.hovered;
         }
     };
 }
