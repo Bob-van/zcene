@@ -10,7 +10,7 @@ pub const InitPreset = struct {
     spacing: f32,
 };
 
-pub fn UiTextBounded(comptime Renderer: type) type {
+pub fn TextBounded(comptime Renderer: type) type {
     const API = api.API(Renderer);
     const window = API.window();
     return struct {

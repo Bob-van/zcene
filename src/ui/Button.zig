@@ -3,7 +3,7 @@ const std = @import("std");
 const api = @import("../engine/api.zig");
 const engine = @import("../engine/engine.zig");
 
-pub fn UiButton(comptime Renderer: type) type {
+pub fn Button(comptime Renderer: type) type {
     const API = api.API(Renderer);
     const window = API.window();
     return struct {

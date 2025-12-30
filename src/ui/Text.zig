@@ -10,7 +10,7 @@ pub const InitPreset = struct {
     spacing: f32,
 };
 
-pub fn UiText(comptime Renderer: type) type {
+pub fn Text(comptime Renderer: type) type {
     const API = api.API(Renderer);
     const window = API.window();
     return struct {

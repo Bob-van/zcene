@@ -3,7 +3,7 @@ const std = @import("std");
 const api = @import("../engine/api.zig");
 const engine = @import("../engine/engine.zig");
 
-pub fn UiBorder(comptime Renderer: type) type {
+pub fn Border(comptime Renderer: type) type {
     const API = api.API(Renderer);
     const window = API.window();
     return struct {

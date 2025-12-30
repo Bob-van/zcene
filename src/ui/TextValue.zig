@@ -1,6 +1,6 @@
 const api = @import("../engine/api.zig");
 
-pub fn UiTextValue(comptime Renderer: type) type {
+pub fn TextValue(comptime Renderer: type) type {
     const API = api.API(Renderer);
     return struct {
         value: []u8,

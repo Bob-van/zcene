@@ -3,13 +3,13 @@ const std = @import("std");
 const api = @import("../engine/api.zig");
 const engine = @import("../engine/engine.zig");
 
-const UiTextValue = @import("UiTextValue.zig").UiTextValue;
+const TextValue = @import("TextValue.zig").TextValue;
 
-pub fn UiTextInputField(comptime Renderer: type) type {
+pub fn TextInputField(comptime Renderer: type) type {
     const API = api.API(Renderer);
     const window = API.window();
     return struct {
-        value: *UiTextValue,
+        value: *TextValue,
         font: *const engine.Font,
 
         cycles_down: u8 = 0,
@@ -41,7 +41,7 @@ pub fn UiTextInputField(comptime Renderer: type) type {
             text_color: engine.Color,
         };
 
-        pub fn init(value: *UiTextValue, font: *const engine.Font, preset: Preset) @This() {
+        pub fn init(value: *TextValue, font: *const engine.Font, preset: Preset) @This() {
             API.log("Initializating UiText\n", .{});
             const tmp_font_size = preset.text_font_size * window.scale;
             const tmp_spacing = preset.text_spacing * window.scale;
@@ -67,7 +67,7 @@ pub fn UiTextInputField(comptime Renderer: type) type {
             };
         }
 
-        pub fn initAlloc(allocator: std.mem.Allocator, value: *UiTextValue, font: *const engine.Font, preset: Preset) !*@This() {
+        pub fn initAlloc(allocator: std.mem.Allocator, value: *TextValue, font: *const engine.Font, preset: Preset) !*@This() {
             const ret = try allocator.create(@This());
             ret.* = init(value, font, preset);
             return ret;

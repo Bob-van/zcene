@@ -4,15 +4,18 @@ const api = @import("../engine/api.zig");
 const engine = @import("../engine/engine.zig");
 
 pub const InitPreset = struct {
+    x: f32,
+    y: f32,
     width: f32,
     height: f32,
 };
 
-pub fn UiSliderHandle(comptime Renderer: type) type {
+pub fn Image(comptime Renderer: type) type {
     const API = api.API(Renderer);
     const window = API.window();
     return struct {
-        presets: *const [API.preset_size]Preset,
+        presets: *const [API.preset_size]InitPreset,
+        position: engine.Vector2,
         texture: engine.Texture2D,
 
         pub const Preset = InitPreset;
@@ -31,18 +34,20 @@ pub fn UiSliderHandle(comptime Renderer: type) type {
             const texture = try engine.loadTextureFromImage(rlib_image);
             API.log("Texture created from image\n", .{});
             return .{
-                .presets = presets,
+                .position = .{
+                    .x = preset.x * window.scale + @as(f32, @floatFromInt(window.left_padding)),
+                    .y = preset.y * window.scale + @as(f32, @floatFromInt(window.top_padding)),
+                },
                 .texture = texture,
+                .presets = presets,
             };
         }
 
-        pub fn initAlloc(allocator: std.mem.Allocator, image: []const u8, presets: *const [API.preset_size]Preset) !*@This() {
+        pub fn initAlloc(allocator: std.mem.Allocator, image: []const u8, preset: Preset) !*@This() {
             const ret = try allocator.create(@This());
-            ret.* = try init(image, presets);
+            ret.* = try init(image, preset);
             return ret;
         }
-
-        pub fn draw(_: @This()) void {}
 
         pub fn deinit(self: *@This()) void {
             engine.unloadTexture(self.texture);
@@ -51,6 +56,10 @@ pub fn UiSliderHandle(comptime Renderer: type) type {
 
         pub fn deinitGeneric(self: *@This(), _: std.mem.Allocator) void {
             self.deinit();
+        }
+
+        pub fn draw(self: *const @This()) void {
+            engine.drawTextureV(self.texture, self.position, engine.Color.white);
         }
     };
 }

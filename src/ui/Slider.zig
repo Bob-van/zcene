@@ -3,13 +3,13 @@ const std = @import("std");
 const api = @import("../engine/api.zig");
 const engine = @import("../engine/engine.zig");
 
-pub fn UiSlider(comptime Renderer: type) type {
+pub fn Slider(comptime Renderer: type) type {
     const API = api.API(Renderer);
-    const UiSliderHandle = @import("UiSliderHandle.zig").UiSliderHandle(Renderer);
+    const SliderHandle = @import("SliderHandle.zig").SliderHandle(Renderer);
     const window = API.window();
     return struct {
         presets: *const [API.preset_size]Preset,
-        handle: *const UiSliderHandle,
+        handle: *const SliderHandle,
         position: engine.Vector2,
         size: engine.Vector2,
         hitbox: engine.Vector2,
@@ -26,7 +26,7 @@ pub fn UiSlider(comptime Renderer: type) type {
             hitbox_increase_height: f32,
         };
 
-        pub fn init(handle: *const UiSliderHandle, value: f32, filled_color: engine.Color, empty_color: engine.Color, presets: *const [API.preset_size]Preset) @This() {
+        pub fn init(handle: *const SliderHandle, value: f32, filled_color: engine.Color, empty_color: engine.Color, presets: *const [API.preset_size]Preset) @This() {
             const preset = presets[API.activePresetIndex()];
             return .{
                 .presets = presets,
@@ -49,7 +49,7 @@ pub fn UiSlider(comptime Renderer: type) type {
             };
         }
 
-        pub fn initAlloc(allocator: std.mem.Allocator, handle: *const UiSliderHandle, value: f32, preset: Preset) !*@This() {
+        pub fn initAlloc(allocator: std.mem.Allocator, handle: *const SliderHandle, value: f32, preset: Preset) !*@This() {
             const ret = try allocator.create(@This());
             ret.* = init(handle, value, preset);
             return ret;
