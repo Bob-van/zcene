@@ -352,3 +352,218 @@ pub const mouse = struct {
         }
     };
 };
+
+pub const gamepad = struct {
+    extern fn IsGamepadAvailable(gamepad: c_int) bool;
+    /// Check if a gamepad is available
+    pub fn isAvailable(id: i32) bool {
+        return IsGamepadAvailable(id);
+    }
+
+    extern fn GetGamepadName(gamepad: c_int) [*c]const u8;
+    /// Get gamepad internal name id
+    pub fn getName(id: i32) [:0]const u8 {
+        return std.mem.span(GetGamepadName(id));
+    }
+
+    extern fn SetGamepadVibration(gamepad: c_int, leftMotor: f32, rightMotor: f32, duration: f32) void;
+    /// Set gamepad vibration for both motors (duration in seconds)
+    pub fn setVibration(id: i32, leftMotor: f32, rightMotor: f32, duration: f32) void {
+        SetGamepadVibration(id, leftMotor, rightMotor, duration);
+    }
+
+    extern fn SetGamepadMappings(mappings: [*c]const u8) c_int;
+    /// Set internal gamepad mappings (SDL_GameControllerDB)
+    pub fn setMappings(mappings: [:0]const u8) i32 {
+        return SetGamepadMappings(@ptrCast(mappings));
+    }
+
+    pub const Button = enum(c_int) {
+        unknown = 0,
+        left_face_up = 1,
+        left_face_right = 2,
+        left_face_down = 3,
+        left_face_left = 4,
+        right_face_up = 5,
+        right_face_right = 6,
+        right_face_down = 7,
+        right_face_left = 8,
+        left_trigger_1 = 9,
+        left_trigger_2 = 10,
+        right_trigger_1 = 11,
+        right_trigger_2 = 12,
+        middle_left = 13,
+        middle = 14,
+        middle_right = 15,
+        left_thumb = 16,
+        right_thumb = 17,
+
+        extern fn GetGamepadButtonPressed() c_int;
+        /// Get the last gamepad button pressed
+        pub fn initLastPressed() Button {
+            return @enumFromInt(GetGamepadButtonPressed());
+        }
+
+        extern fn IsGamepadButtonUp(gamepad: c_int, button: c_int) bool;
+        /// Check if a gamepad button is NOT being pressed
+        pub fn isUp(self: Button, id: i32) bool {
+            return IsGamepadButtonUp(id, @intFromEnum(self));
+        }
+
+        extern fn IsGamepadButtonDown(gamepad: c_int, button: c_int) bool;
+        /// Check if a gamepad button is being pressed
+        pub fn isDown(self: Button, id: i32) bool {
+            return IsGamepadButtonDown(id, @intFromEnum(self));
+        }
+
+        extern fn IsGamepadButtonPressed(gamepad: c_int, button: c_int) bool;
+        /// Check if a gamepad button has been pressed once
+        pub fn isPressed(self: Button, id: i32) bool {
+            return IsGamepadButtonPressed(id, @intFromEnum(self));
+        }
+
+        extern fn IsGamepadButtonReleased(gamepad: c_int, button: c_int) bool;
+        /// Check if a gamepad button has been released once
+        pub fn isReleased(self: Button, id: i32) bool {
+            return IsGamepadButtonReleased(id, @intFromEnum(self));
+        }
+    };
+
+    pub const Axis = enum(c_int) {
+        left_x = 0,
+        left_y = 1,
+        right_x = 2,
+        right_y = 3,
+        left_trigger = 4,
+        right_trigger = 5,
+
+        extern fn GetGamepadAxisCount(gamepad: c_int) c_int;
+        /// Get axis count for a gamepad
+        pub fn getCount(id: i32) i32 {
+            return GetGamepadAxisCount(id);
+        }
+
+        extern fn GetGamepadAxisMovement(gamepad: c_int, axis: c_int) f32;
+        /// Get movement value for a gamepad axis
+        pub fn getMovement(self: Axis, id: i32) f32 {
+            return GetGamepadAxisMovement(id, @intFromEnum(self));
+        }
+    };
+};
+
+pub const touch = struct {
+    extern fn GetTouchX() c_int;
+    /// Get touch position X for touch point 0 (relative to screen size)
+    pub fn getX() i32 {
+        return GetTouchX();
+    }
+
+    extern fn GetTouchY() c_int;
+    /// Get touch position Y for touch point 0 (relative to screen size)
+    pub fn getY() i32 {
+        return GetTouchY();
+    }
+
+    extern fn GetTouchPosition(index: c_int) Vector2;
+    /// Get touch position XY for a touch point index (relative to screen size)
+    pub fn getPosition(index: i32) Vector2 {
+        return GetTouchPosition(index);
+    }
+
+    extern fn GetTouchPointId(index: c_int) c_int;
+    /// Get touch point identifier for given index
+    pub fn getPointId(index: i32) i32 {
+        return GetTouchPointId(index);
+    }
+
+    extern fn GetTouchPointCount() c_int;
+    /// Get number of touch points
+    pub fn getPointCount() i32 {
+        return GetTouchPointCount();
+    }
+};
+
+pub const gesture = struct {
+    extern fn GetGestureHoldDuration() f32;
+    /// Get gesture hold time in seconds
+    pub fn getHoldDuration() f32 {
+        return GetGestureHoldDuration();
+    }
+
+    extern fn GetGestureDragVector() Vector2;
+    /// Get gesture drag vector
+    pub fn getDragVector() Vector2 {
+        return GetGestureDragVector();
+    }
+
+    extern fn GetGestureDragAngle() f32;
+    /// Get gesture drag angle
+    pub fn getDragAngle() f32 {
+        return GetGestureDragAngle();
+    }
+
+    extern fn GetGesturePinchVector() Vector2;
+    /// Get gesture pinch delta
+    pub fn getPinchVector() Vector2 {
+        return GetGesturePinchVector();
+    }
+
+    extern fn GetGesturePinchAngle() f32;
+    /// Get gesture pinch angle
+    pub fn getPinchAngle() f32 {
+        return GetGesturePinchAngle();
+    }
+
+    pub const Type = packed struct {
+        tap: bool = false,
+        doubletap: bool = false,
+        hold: bool = false,
+        drag: bool = false,
+        swipe_right: bool = false,
+        swipe_left: bool = false,
+        swipe_up: bool = false,
+        swipe_down: bool = false,
+        pinch_in: bool = false,
+        pinch_out: bool = false,
+        __reserved1: bool = false,
+        __reserved2: bool = false,
+        __reserved3: bool = false,
+        __reserved4: bool = false,
+        __reserved5: bool = false,
+        __reserved6: bool = false,
+        __reserved7: bool = false,
+        __reserved8: bool = false,
+        __reserved9: bool = false,
+        __reserved10: bool = false,
+        __reserved11: bool = false,
+        __reserved12: bool = false,
+        __reserved13: bool = false,
+        __reserved14: bool = false,
+        __reserved15: bool = false,
+        __reserved16: bool = false,
+        __reserved17: bool = false,
+        __reserved18: bool = false,
+        __reserved19: bool = false,
+        __reserved20: bool = false,
+        __reserved21: bool = false,
+        __reserved22: bool = false,
+
+        extern fn GetGestureDetected() c_int;
+        /// Get latest detected gesture
+        pub fn initLastDetected() gesture.Type {
+            return @bitCast(GetGestureDetected());
+        }
+
+        extern fn SetGesturesEnabled(flags: c_uint) void;
+        /// Enable a set of gestures using flags
+        pub fn setEnabled(self: gesture.Type) void {
+            SetGesturesEnabled(@bitCast(self));
+        }
+
+        extern fn IsGestureDetected(gesture: c_uint) bool;
+        /// Check if a gesture have been detected
+        pub fn isDetected(self: gesture.Type) bool {
+            return IsGestureDetected(@bitCast(self));
+        }
+    };
+};

@@ -217,6 +217,55 @@ pub const Rectangle = extern struct {
         return Rectangle{ .x = x, .y = y, .width = width, .height = height };
     }
 
+    extern fn DrawRectangleRec(rec: Rectangle, color: Color) void;
+    /// Draw a color-filled rectangle
+    pub fn draw(self: Rectangle, color: Color) void {
+        safety.drawingBegun();
+        DrawRectangleRec(self, color);
+    }
+
+    extern fn DrawRectanglePro(rec: Rectangle, origin: Vector2, rotation: f32, color: Color) void;
+    /// Draw a color-filled rectangle with pro parameters
+    pub fn drawPro(self: Rectangle, origin: Vector2, rotation: f32, color: Color) void {
+        safety.drawingBegun();
+        DrawRectanglePro(self, origin, rotation, color);
+    }
+
+    extern fn DrawRectangleGradientEx(rec: Rectangle, topLeft: Color, bottomLeft: Color, bottomRight: Color, topRight: Color) void;
+    /// Draw a gradient-filled rectangle with custom vertex colors
+    pub fn drawGradientEx(self: Rectangle, topLeft: Color, bottomLeft: Color, bottomRight: Color, topRight: Color) void {
+        safety.drawingBegun();
+        DrawRectangleGradientEx(self, topLeft, bottomLeft, bottomRight, topRight);
+    }
+
+    extern fn DrawRectangleLinesEx(rec: Rectangle, lineThick: f32, color: Color) void;
+    /// Draw rectangle outline with extended parameters
+    pub fn drawLinesEx(self: Rectangle, lineThick: f32, color: Color) void {
+        safety.drawingBegun();
+        DrawRectangleLinesEx(self, lineThick, color);
+    }
+
+    extern fn DrawRectangleRounded(rec: Rectangle, roundness: f32, segments: c_int, color: Color) void;
+    /// Draw rectangle with rounded edges
+    pub fn drawRounded(self: Rectangle, roundness: f32, segments: i32, color: Color) void {
+        safety.drawingBegun();
+        DrawRectangleRounded(self, roundness, segments, color);
+    }
+
+    extern fn DrawRectangleRoundedLines(rec: Rectangle, roundness: f32, segments: c_int, color: Color) void;
+    /// Draw rectangle lines with rounded edges
+    pub fn drawRoundedLines(self: Rectangle, roundness: f32, segments: i32, color: Color) void {
+        safety.drawingBegun();
+        DrawRectangleRoundedLines(self, roundness, segments, color);
+    }
+
+    extern fn DrawRectangleRoundedLinesEx(rec: Rectangle, roundness: f32, segments: c_int, lineThick: f32, color: Color) void;
+    /// Draw rectangle with rounded edges outline
+    pub fn drawRoundedLinesEx(self: Rectangle, roundness: f32, segments: i32, lineThick: f32, color: Color) void {
+        safety.drawingBegun();
+        DrawRectangleRoundedLinesEx(self, roundness, segments, lineThick, color);
+    }
+
     extern fn CheckCollisionRecs(rec1: Rectangle, rec2: Rectangle) bool;
     /// Check collision between two rectangles
     pub fn checkCollision(self: Rectangle, other: Rectangle) bool {
@@ -953,36 +1002,42 @@ pub const Texture = extern struct {
     extern fn DrawTexture(texture: Texture, posX: c_int, posY: c_int, tint: Color) void;
     /// Draw a Texture
     pub fn draw(self: Texture, posX: i32, posY: i32, tint: Color) void {
+        safety.drawingBegun();
         DrawTexture(self, posX, posY, tint);
     }
 
     extern fn DrawTextureV(texture: Texture, position: Vector2, tint: Color) void;
     /// Draw a Texture with position defined as Vector2
     pub fn drawV(self: Texture, position: Vector2, tint: Color) void {
+        safety.drawingBegun();
         DrawTextureV(self, position, tint);
     }
 
     extern fn DrawTextureEx(texture: Texture, position: Vector2, rotation: f32, scale: f32, tint: Color) void;
     /// Draw a Texture with extended parameters
     pub fn drawEx(self: Texture, position: Vector2, rotation: f32, scale: f32, tint: Color) void {
+        safety.drawingBegun();
         DrawTextureEx(self, position, rotation, scale, tint);
     }
 
     extern fn DrawTextureRec(texture: Texture, source: Rectangle, position: Vector2, tint: Color) void;
     /// Draw a part of a texture defined by a rectangle
     pub fn drawRec(self: Texture, source: Rectangle, position: Vector2, tint: Color) void {
+        safety.drawingBegun();
         DrawTextureRec(self, source, position, tint);
     }
 
     extern fn DrawTexturePro(texture: Texture, source: Rectangle, dest: Rectangle, origin: Vector2, rotation: f32, tint: Color) void;
     /// Draw a part of a texture defined by a rectangle with 'pro' parameters
     pub fn drawPro(self: Texture, source: Rectangle, dest: Rectangle, origin: Vector2, rotation: f32, tint: Color) void {
+        safety.drawingBegun();
         DrawTexturePro(self, source, dest, origin, rotation, tint);
     }
 
     extern fn DrawTextureNPatch(texture: Texture, nPatchInfo: NPatch, dest: Rectangle, origin: Vector2, rotation: f32, tint: Color) void;
     /// Draws a texture (or part of it) that stretches or shrinks nicely
     pub fn drawNPatch(self: Texture, nPatchInfo: NPatch, dest: Rectangle, origin: Vector2, rotation: f32, tint: Color) void {
+        safety.drawingBegun();
         DrawTextureNPatch(self, nPatchInfo, dest, origin, rotation, tint);
     }
 };

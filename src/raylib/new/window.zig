@@ -154,10 +154,9 @@ pub fn restore() void {
     RestoreWindow();
 }
 
-extern fn SetWindowIcon(image: Image) void;
 /// Set icon for window (single image, RGBA 32bit)
 pub fn setIcon(image: Image) void {
-    SetWindowIcon(image);
+    image.setAsWindowIcon();
 }
 
 extern fn SetWindowIcons(images: [*c]Image, count: c_int) void;

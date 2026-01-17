@@ -129,12 +129,14 @@ pub const Mesh = extern struct {
     extern fn DrawMesh(mesh: Mesh, material: Material, transform: Matrix) void;
     /// Draw a 3d mesh with material and transform
     pub fn draw(self: Mesh, material: Material, transform: Matrix) void {
+        safety.drawingBegun();
         DrawMesh(self, material, transform);
     }
 
     extern fn DrawMeshInstanced(mesh: Mesh, material: Material, transforms: [*c]const Matrix, instances: c_int) void;
     /// Draw multiple mesh instances with material and different transforms
     pub fn drawInstanced(self: Mesh, material: Material, transforms: []const Matrix) void {
+        safety.drawingBegun();
         DrawMeshInstanced(self, material, @ptrCast(transforms.ptr), @intCast(transforms.len));
     }
 
@@ -445,36 +447,42 @@ pub const Model = extern struct {
     extern fn DrawModel(model: Model, position: Vector3, scale: f32, tint: Color) void;
     /// Draw a model (with texture if set)
     pub fn draw(model: Model, position: Vector3, scale: f32, tint: Color) void {
+        safety.drawingBegun();
         DrawModel(model, position, scale, tint);
     }
 
     extern fn DrawModelEx(model: Model, position: Vector3, rotationAxis: Vector3, rotationAngle: f32, scale: Vector3, tint: Color) void;
     /// Draw a model with extended parameters
     pub fn drawEx(model: Model, position: Vector3, rotationAxis: Vector3, rotationAngle: f32, scale: Vector3, tint: Color) void {
+        safety.drawingBegun();
         DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
     }
 
     extern fn DrawModelWires(model: Model, position: Vector3, scale: f32, tint: Color) void;
     /// Draw a model wires (with texture if set)
     pub fn drawWires(model: Model, position: Vector3, scale: f32, tint: Color) void {
+        safety.drawingBegun();
         DrawModelWires(model, position, scale, tint);
     }
 
     extern fn DrawModelWiresEx(model: Model, position: Vector3, rotationAxis: Vector3, rotationAngle: f32, scale: Vector3, tint: Color) void;
     /// Draw a model wires (with texture if set) with extended parameters
     pub fn drawWiresEx(model: Model, position: Vector3, rotationAxis: Vector3, rotationAngle: f32, scale: Vector3, tint: Color) void {
+        safety.drawingBegun();
         DrawModelWiresEx(model, position, rotationAxis, rotationAngle, scale, tint);
     }
 
     extern fn DrawModelPoints(model: Model, position: Vector3, scale: f32, tint: Color) void;
     /// Draw a model as points
     pub fn drawPoints(model: Model, position: Vector3, scale: f32, tint: Color) void {
+        safety.drawingBegun();
         DrawModelPoints(model, position, scale, tint);
     }
 
     extern fn DrawModelPointsEx(model: Model, position: Vector3, rotationAxis: Vector3, rotationAngle: f32, scale: Vector3, tint: Color) void;
     /// Draw a model as points with extended parameters
     pub fn drawPointsEx(model: Model, position: Vector3, rotationAxis: Vector3, rotationAngle: f32, scale: Vector3, tint: Color) void {
+        safety.drawingBegun();
         DrawModelPointsEx(model, position, rotationAxis, rotationAngle, scale, tint);
     }
 
@@ -544,6 +552,7 @@ pub const BoundingBox = extern struct {
     extern fn DrawBoundingBox(box: BoundingBox, color: Color) void;
     /// Draw bounding box (wires)
     pub fn draw(self: BoundingBox, color: Color) void {
+        safety.drawingBegun();
         DrawBoundingBox(self, color);
     }
 
@@ -567,6 +576,7 @@ pub const Ray = extern struct {
     extern fn DrawRay(ray: Ray, color: Color) void;
     /// Draw a ray line
     pub fn draw(self: Ray, color: Color) void {
+        safety.drawingBegun();
         DrawRay(self, color);
     }
 

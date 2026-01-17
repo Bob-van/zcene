@@ -153,6 +153,7 @@ test "raylib integration coverage" {
                     }
                 }
                 if (map.getPtr(function)) |val| {
+                    if (val.* == true) std.debug.print("Duplicate private extern: {s}\n", .{function});
                     val.* = true;
                 } else {
                     std.debug.print("Found unknown: {s}\n", .{function});
