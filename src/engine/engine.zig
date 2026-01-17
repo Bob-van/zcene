@@ -19,21 +19,19 @@ pub const TraceLogLevel = rlib.TraceLogLevel;
 pub const ConfigFlags = rlib.ConfigFlags;
 
 // safety check in Debug and ReleaseSafe build modes
-var rendering = false;
+
+const new = @import("../raylib/new/raylib.zig");
+const safety = new.safety;
 
 /// Setup canvas (framebuffer) to start drawing
 pub fn beginDrawing() void {
-    if (builtin.mode == .Debug or builtin.mode == .ReleaseSafe) {
-        if (rendering) unreachable else rendering = true;
-    }
+    safety.beginDrawing();
     rlib.beginDrawing();
 }
 
 /// End canvas drawing and swap buffers (double buffering)
 pub fn endDrawing() void {
-    if (builtin.mode == .Debug or builtin.mode == .ReleaseSafe) {
-        if (rendering) rendering = false else unreachable;
-    }
+    safety.endDrawing();
     rlib.endDrawing();
 }
 
@@ -355,4 +353,8 @@ pub fn beginTextureMode(target: RenderTexture2D) void {
 
 pub fn endTextureMode() void {
     rlib.endTextureMode();
+}
+
+pub fn getFontDefault() !Font {
+    return rlib.getFontDefault();
 }

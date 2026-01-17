@@ -57,6 +57,7 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
             .shouldWindowClose = wasWindowClosed,
             .requestNextScene = requestNextScene,
             .requestTermination = requestTermination,
+            .requestFpsCap = requestFpsCap,
             .requestFpsCapUpdate = requestFpsCapUpdate,
         };
 
@@ -212,6 +213,10 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
 
         fn requestTermination() void {
             window_opened = false;
+        }
+
+        fn requestFpsCap() u31 {
+            return fps_cap;
         }
 
         fn requestFpsCapUpdate(new_cap: u31) void {

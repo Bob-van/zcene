@@ -27,6 +27,7 @@ pub fn FnTable(Renderer: type) type {
         shouldWindowClose: fn () bool,
         requestNextScene: fn (Renderer.AccessEnum) void,
         requestTermination: fn () void,
+        requestFpsCap: fn () u31,
         requestFpsCapUpdate: fn (u31) void,
     };
 }
@@ -111,6 +112,10 @@ pub fn API(Renderer: type) type {
         /// (0 means no limit)
         pub fn requestFpsCapUpdate(fps: u31) void {
             table.requestFpsCapUpdate(fps);
+        }
+
+        pub fn requestFpsCap() u31 {
+            return table.requestFpsCap();
         }
     };
 }

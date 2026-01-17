@@ -75,6 +75,7 @@ pub fn LazyGroup(comptime Renderer: type) fn (comptime components: []const Group
 
                 pub fn draw(self: *@This(), changed: bool) void {
                     if (changed) {
+                        API.log("Lazy group rerendered content!\n", .{});
                         engine.beginTextureMode(self.lazy_texture);
                         defer engine.endTextureMode();
                         inline for (0..components.len) |i| {

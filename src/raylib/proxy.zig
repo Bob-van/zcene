@@ -2249,7 +2249,7 @@ pub fn getFontDefault() RaylibError!Font {
     // TODO: GetFontDefault requires SUPPORT_DEFAULT_FONT. Error out if unset.
     const font = cdef.GetFontDefault();
     const isValid = cdef.IsFontValid(@bitCast(font));
-    return if (isValid) font else RaylibError.LoadFont;
+    return if (isValid) @bitCast(font) else RaylibError.LoadFont;
 }
 
 /// Load font from file into GPU memory (VRAM)

@@ -3,7 +3,7 @@ const std = @import("std");
 const api = @import("../engine/api.zig");
 const engine = @import("../engine/engine.zig");
 
-const TextValue = @import("TextValue.zig").TextValue;
+const TextValue = @import("TextInputFieldValue.zig").TextValue;
 
 pub fn TextInputField(comptime Renderer: type) type {
     const API = api.API(Renderer);
