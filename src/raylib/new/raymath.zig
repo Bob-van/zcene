@@ -1,7 +1,7 @@
 //! Autogen by zig translate-C
 //! Already hastly modified and pruned of unnecessary declarations.
 //! Its currently not a priority, but will clean it up later.
-//! (might even remove one dyn. linked dependency when building for linux)
+//! (might even remove one dyn. linked dependency when building for linux when finished)
 
 const std = @import("std");
 

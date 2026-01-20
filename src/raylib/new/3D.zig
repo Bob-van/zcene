@@ -5,10 +5,14 @@ const Vector3 = math.Vector3;
 const Matrix = math.Matrix;
 const Quaternion = math.Quaternion;
 
-const uncategorized = @import("uncategorized.zig");
-const Color = uncategorized.Color;
-const Image = uncategorized.Image;
-const Texture = uncategorized.Texture;
+const r2D = @import("2D.zig");
+const Color = r2D.Color;
+const Image = r2D.Image;
+const Texture = r2D.Texture;
+
+pub const Camera = @import("camera.zig").r3D;
+pub const draw = @import("draw.zig").r3D;
+pub const collision = @import("collision.zig").r3D;
 
 pub const Mesh = extern struct {
     vertexCount: c_int,

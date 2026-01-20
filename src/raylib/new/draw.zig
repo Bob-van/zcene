@@ -1,26 +1,15 @@
 const safety = @import("safety.zig");
 
+const frame = @import("frame.zig");
+
 const math = @import("math.zig");
 const Vector2 = math.Vector2;
 const Vector3 = math.Vector3;
 
-const uncategorized = @import("uncategorized.zig");
-const Color = uncategorized.Color;
-const Rectangle = uncategorized.Rectangle;
-
-extern fn BeginDrawing() void;
-/// Setup canvas (framebuffer) to start drawing
-pub fn begin() void {
-    safety.beginDrawing();
-    BeginDrawing();
-}
-
-extern fn EndDrawing() void;
-/// End canvas drawing and swap buffers (double buffering)
-pub fn end() void {
-    safety.endDrawing();
-    EndDrawing();
-}
+const _r2D = @import("2D.zig");
+const Color = _r2D.Color;
+const Rectangle = _r2D.Rectangle;
+const Texture = _r2D.Texture;
 
 extern fn ClearBackground(color: Color) void;
 /// Set background color (framebuffer clear color)
@@ -29,7 +18,44 @@ pub fn clear(color: Color) void {
     ClearBackground(color);
 }
 
+extern fn BeginScissorMode(x: c_int, y: c_int, width: c_int, height: c_int) void;
+/// Begin scissor mode (define screen area for following drawing)
+pub fn beginScissorMode(x: i32, y: i32, width: i32, height: i32) void {
+    BeginScissorMode(x, y, width, height);
+}
+
+extern fn EndScissorMode() void;
+/// End scissor mode
+pub fn endScissorMode() void {
+    EndScissorMode();
+}
+
 pub const r2D = struct {
+    /// Set texture and rectangle to be used on shapes drawing
+    ///
+    /// NOTE: It can be useful when using basic shapes and one single font,
+    ///
+    /// defining a font char white rectangle would allow drawing everything in a single draw call
+    pub const batching = struct {
+        extern fn SetShapesTexture(texture: Texture, source: Rectangle) void;
+        /// Set texture and rectangle to be used on shapes drawing
+        pub fn set(texture: Texture, source: Rectangle) void {
+            SetShapesTexture(texture, source);
+        }
+
+        extern fn GetShapesTexture() Texture;
+        /// Get texture that is used for shapes drawing
+        pub fn getTexture() Texture {
+            return GetShapesTexture();
+        }
+
+        extern fn GetShapesTextureRectangle() Rectangle;
+        /// Get texture source rectangle that is used for shapes drawing
+        pub fn getRectangle() Rectangle {
+            return GetShapesTextureRectangle();
+        }
+    };
+
     extern fn DrawPixel(posX: c_int, posY: c_int, color: Color) void;
     /// Draw a pixel using geometry [Can be slow, use with care]
     pub fn pixel(posX: i32, posY: i32, color: Color) void {

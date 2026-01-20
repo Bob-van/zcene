@@ -1,10 +1,12 @@
 const std = @import("std");
 
+const safety = @import("safety.zig");
+
 const math = @import("math.zig");
 const Vector2 = math.Vector2;
 
-const uncategorized = @import("uncategorized.zig");
-const Image = uncategorized.Image;
+const r2D = @import("2D.zig");
+const Image = r2D.Image;
 
 extern fn EnableEventWaiting() void;
 /// Enable waiting for events on EndDrawing(), no automatic event polling
@@ -16,6 +18,12 @@ extern fn DisableEventWaiting() void;
 /// Disable waiting for events on EndDrawing(), automatic events polling
 pub fn disableEventWaiting() void {
     DisableEventWaiting();
+}
+
+extern fn OpenURL(url: [*c]const u8) void;
+/// Open URL with default system browser (if available)
+pub fn openURL(url: [:0]const u8) void {
+    OpenURL(@ptrCast(url));
 }
 
 pub const keyboard = struct {
@@ -564,6 +572,35 @@ pub const gesture = struct {
         /// Check if a gesture have been detected
         pub fn isDetected(self: gesture.Type) bool {
             return IsGestureDetected(@bitCast(self));
+        }
+    };
+};
+
+pub const filedrop = struct {
+    extern fn IsFileDropped() bool;
+    /// Check if a file has been dropped into window
+    pub fn isDropped() bool {
+        return IsFileDropped();
+    }
+
+    /// TO DO: make it nicer with explicit [][]u8
+    pub const FileList = extern struct {
+        capacity: c_uint,
+        count: c_uint,
+        paths: [*c][*c]u8,
+
+        extern fn LoadDroppedFiles() FileList;
+        /// Load dropped filepaths
+        pub fn init() FileList {
+            safety.load();
+            return LoadDroppedFiles();
+        }
+
+        extern fn UnloadDroppedFiles(files: FileList) void;
+        /// Unload dropped filepaths
+        pub fn deinit(self: FileList) void {
+            safety.unload();
+            UnloadDroppedFiles(self);
         }
     };
 };

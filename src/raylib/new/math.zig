@@ -8,6 +8,36 @@ pub const Vector2 = extern struct {
         return Vector2{ .x = x, .y = y };
     }
 
+    extern fn GetSplinePointLinear(startPos: Vector2, endPos: Vector2, t: f32) Vector2;
+    /// Get (evaluate) spline point: Linear
+    pub fn initSplinePointLinear(startPos: Vector2, endPos: Vector2, t: f32) Vector2 {
+        return GetSplinePointLinear(startPos, endPos, t);
+    }
+
+    extern fn GetSplinePointBasis(p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, t: f32) Vector2;
+    /// Get (evaluate) spline point: B-Spline
+    pub fn initSplinePointBasis(p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, t: f32) Vector2 {
+        return GetSplinePointBasis(p1, p2, p3, p4, t);
+    }
+
+    extern fn GetSplinePointCatmullRom(p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, t: f32) Vector2;
+    /// Get (evaluate) spline point: Catmull-Rom
+    pub fn initSplinePointCatmullRom(p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, t: f32) Vector2 {
+        return GetSplinePointCatmullRom(p1, p2, p3, p4, t);
+    }
+
+    extern fn GetSplinePointBezierQuad(p1: Vector2, c2: Vector2, p3: Vector2, t: f32) Vector2;
+    /// Get (evaluate) spline point: Quadratic Bezier
+    pub fn initSplinePointBezierQuad(p1: Vector2, c2: Vector2, p3: Vector2, t: f32) Vector2 {
+        return GetSplinePointBezierQuad(p1, c2, p3, t);
+    }
+
+    extern fn GetSplinePointBezierCubic(p1: Vector2, c2: Vector2, c3: Vector2, p4: Vector2, t: f32) Vector2;
+    /// Get (evaluate) spline point: Cubic Bezier
+    pub fn initSplinePointBezierCubic(p1: Vector2, c2: Vector2, c3: Vector2, p4: Vector2, t: f32) Vector2 {
+        return GetSplinePointBezierCubic(p1, c2, c3, p4, t);
+    }
+
     /// Vector with components value 0.0
     pub fn zero() Vector2 {
         return math.Vector2Zero();

@@ -3,8 +3,8 @@ const safety = @import("safety.zig");
 const math = @import("math.zig");
 const Vector2 = math.Vector2;
 
-const uncategorized = @import("uncategorized.zig");
-const Image = uncategorized.Image;
+const r2D = @import("2D.zig");
+const Image = r2D.Image;
 
 const io = @import("io.zig");
 const keyboard = io.keyboard;
@@ -44,10 +44,12 @@ pub const Flags = packed struct {
     __reserved16: bool = false,
 };
 
+extern fn SetConfigFlags(flags: c_uint) void;
 extern fn InitWindow(width: c_int, height: c_int, title: [*c]const u8) void;
 /// Initialize window and OpenGL context
-pub fn init(width: i32, height: i32, title: [:0]const u8) void {
+pub fn init(width: i32, height: i32, title: [:0]const u8, flags: Flags) void {
     safety.initWindow();
+    SetConfigFlags(@bitCast(flags));
     InitWindow(width, height, @ptrCast(title));
 }
 
@@ -246,4 +248,10 @@ pub fn getRenderHeight() i32 {
 /// Set a custom key to exit program (default is ESC)
 pub fn setExitKey(key: keyboard.Key) void {
     keyboard.setExitKey(key);
+}
+
+extern fn TakeScreenshot(fileName: [*c]const u8) void;
+/// Takes a screenshot of current screen (filename extension defines format)
+pub fn takeScreenshot(fileName: [:0]const u8) void {
+    TakeScreenshot(@ptrCast(fileName));
 }

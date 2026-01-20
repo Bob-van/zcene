@@ -5,6 +5,14 @@ const Vector2 = math.Vector2;
 const Vector3 = math.Vector3;
 const Vector4 = math.Vector4;
 
+const txt = @import("text.zig");
+const GlyphInfo = txt.GlyphInfo;
+const Font = txt.Font;
+
+pub const Camera = @import("camera.zig").r2D;
+pub const draw = @import("draw.zig").r2D;
+pub const collision = @import("collision.zig").r2D;
+
 pub const PixelFormat = enum(c_int) {
     uncompressed_grayscale = 1,
     uncompressed_gray_alpha = 2,
@@ -144,6 +152,12 @@ pub const Color = extern struct {
         return ColorAlpha(self, a);
     }
 
+    extern fn GetPixelDataSize(width: c_int, height: c_int, format: c_int) c_int;
+    /// Get pixel data size in bytes for certain format
+    pub fn getPixelPtrSize(width: i32, height: i32, format: PixelFormat) i32 {
+        return GetPixelDataSize(width, height, @intFromEnum(format));
+    }
+
     extern fn ColorToInt(color: Color) c_int;
     /// Get hexadecimal value for a Color
     pub fn toHex(self: Color) u32 {
@@ -172,38 +186,6 @@ pub const Color = extern struct {
     /// Get color lerp interpolation between two colors, factor [0.0f..1.0f]
     pub fn lerp(self: Color, other: Color, factor: f32) Color {
         return ColorLerp(self, other, factor);
-    }
-};
-
-pub const GlyphInfo = extern struct {
-    value: c_int,
-    offsetX: c_int,
-    offsetY: c_int,
-    advanceX: c_int,
-    image: Image,
-
-    pub const Error = error{InvalidFontData};
-
-    extern fn LoadFontData(fileData: [*c]const u8, dataSize: c_int, fontSize: c_int, codepoints: [*c]c_int, codepointCount: c_int, @"type": c_int) [*c]GlyphInfo;
-    /// Load font data for further use
-    pub fn initFontData(fileData: []const u8, fontSize: i32, codePoints: ?[]i32, ty: Font.Type) Error![]GlyphInfo {
-        var codePointsFinal: [*c]c_int = null;
-        var codePointsLen: c_int = 95;
-        if (codePoints) |codePointsSure| {
-            codePointsFinal = @ptrCast(codePointsSure);
-            codePointsLen = @intCast(codePointsSure.len);
-        }
-        const ptr = LoadFontData(@ptrCast(fileData), @intCast(fileData.len), fontSize, codePointsFinal, codePointsLen, @intFromEnum(ty));
-        if (ptr == 0) return Error.InvalidFontData;
-        for (0..@intCast(codePointsLen)) |_| safety.load();
-        return ptr[0..@intCast(codePointsLen)];
-    }
-
-    extern fn UnloadFontData(glyphs: [*c]GlyphInfo, glyphCount: c_int) void;
-    /// Unload font chars info data (RAM)
-    pub fn deinitFontData(chars: []GlyphInfo) void {
-        for (chars) |_| safety.unload();
-        UnloadFontData(@ptrCast(chars), @intCast(chars.len));
     }
 };
 
@@ -277,94 +259,17 @@ pub const Rectangle = extern struct {
     pub fn getCollision(self: Rectangle, other: Rectangle) Rectangle {
         return GetCollisionRec(self, other);
     }
-};
 
-pub const Font = extern struct {
-    baseSize: c_int,
-    glyphCount: c_int,
-    glyphPadding: c_int,
-    texture: Texture,
-    recs: [*c]Rectangle,
-    glyphs: [*c]GlyphInfo,
-
-    pub const Error = error{InvalidFont};
-
-    pub const Type = enum(c_int) {
-        default = 0,
-        bitmap = 1,
-        sdf = 2,
-    };
-
-    /// Check if a font is valid (font data loaded, WARNING: GPU texture not checked)
-    extern fn IsFontValid(font: Font) bool;
-
-    extern fn LoadFont(fileName: [*c]const u8) Font;
-    /// Load font from file into GPU memory (VRAM)
-    pub fn initFile(fileName: [:0]const u8) Error!Font {
-        const font = LoadFont(@ptrCast(fileName));
-        if (!IsFontValid(font)) return Error.InvalidFont;
-        safety.load();
-        return font;
+    extern fn CheckCollisionPointRec(point: Vector2, rec: Rectangle) bool;
+    /// Check if point is inside rectangle
+    pub fn checkCollisionPoint(self: Rectangle, point: Vector2) bool {
+        return CheckCollisionPointRec(point, self);
     }
 
-    extern fn LoadFontEx(fileName: [*c]const u8, fontSize: c_int, codepoints: [*c]const c_int, codepointCount: c_int) Font;
-    /// Load font from file with extended parameters, use null for fontChars to load the default character set
-    pub fn initFileEx(fileName: [:0]const u8, fontSize: i32, fontChars: ?[]i32) Error!Font {
-        var fontCharsFinal: [*c]const c_int = null;
-        var fontCharsLen: c_int = 0;
-        if (fontChars) |fontCharsSure| {
-            fontCharsFinal = @ptrCast(fontCharsSure);
-            fontCharsLen = @intCast(fontCharsSure.len);
-        }
-        const font = LoadFontEx(@ptrCast(fileName), fontSize, fontCharsFinal, fontCharsLen);
-        if (!IsFontValid(font)) return Error.InvalidFont;
-        safety.load();
-        return font;
-    }
-
-    extern fn LoadFontFromImage(image: Image, key: Color, firstChar: c_int) Font;
-    /// Load font from Image (XNA style)
-    pub fn initXNAImage(image: Image, key: Color, firstChar: i32) Error!Font {
-        const font = LoadFontFromImage(image, key, firstChar);
-        if (!IsFontValid(font)) return Error.InvalidFont;
-        safety.load();
-        return font;
-    }
-
-    extern fn LoadFontFromMemory(fileType: [*c]const u8, fileData: [*c]const u8, dataSize: c_int, fontSize: c_int, codepoints: [*c]const c_int, codepointCount: c_int) Font;
-    /// Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
-    pub fn initMemory(fileType: [:0]const u8, fileData: ?[]const u8, fontSize: i32, fontChars: ?[]i32) Error!Font {
-        var fileDataFinal: [*c]const u8 = null;
-        var fileDataLen: c_int = 0;
-        if (fileData) |fileDataSure| {
-            fileDataFinal = @ptrCast(fileDataSure);
-            fileDataLen = @intCast(fileDataSure.len);
-        }
-        const codepointCount: c_int = if (fontChars) |fontCharsSure| @intCast(fontCharsSure.len) else 0;
-        const font = LoadFontFromMemory(@ptrCast(fileType), @ptrCast(fileDataFinal), fileDataLen, fontSize, @ptrCast(fontChars), codepointCount);
-        if (!IsFontValid(font)) return Error.InvalidFont;
-        safety.load();
-        return font;
-    }
-
-    extern fn UnloadFont(font: Font) void;
-    /// Unload font from GPU memory (VRAM)
-    pub fn deinit(self: Font) void {
-        safety.unload();
-        UnloadFont(self);
-    }
-
-    extern fn GetFontDefault() Font;
-    /// Get the default Font (does not require deinit)
-    pub fn default() Error!Font {
-        const font = GetFontDefault();
-        return if (IsFontValid(font)) font else Error.InvalidFont;
-    }
-
-    extern fn ExportFontAsCode(font: Font, fileName: [*c]const u8) bool;
-    /// Export font as code file, returns true on success
-    pub fn exportAsCode(self: Font, fileName: [:0]const u8) bool {
-        return ExportFontAsCode(self, fileName);
+    extern fn CheckCollisionCircleRec(center: Vector2, radius: f32, rec: Rectangle) bool;
+    /// Check collision between circle and rectangle
+    pub fn checkCollisionCircle(self: Rectangle, center: Vector2, radius: f32) bool {
+        return CheckCollisionCircleRec(center, radius, self);
     }
 };
 
@@ -890,6 +795,47 @@ pub const Image = extern struct {
     pub fn toCubemap(self: Image, layout: CubemapLayout) Texture.Error!Texture {
         return Texture.initCubemap(self, layout);
     }
+
+    pub const Colors = struct {
+        RGBA_32bit: []Color,
+
+        extern fn LoadImageColors(image: Image) [*c]Color;
+        /// Load color data from image as a Color array (RGBA - 32bit)
+        pub fn init(image: Image) Image.Error!Colors {
+            const ptr = LoadImageColors(image);
+            if (ptr == 0) return Image.Error.InvalidImage;
+            safety.load();
+            return .{ .RGBA_32bit = ptr[0..@intCast(image.width * image.height)] };
+        }
+
+        extern fn UnloadImageColors(colors: [*c]Color) void;
+        /// Unload color data loaded with LoadImageColors()
+        pub fn deinit(colors: Colors) void {
+            safety.unload();
+            UnloadImageColors(@ptrCast(colors.RGBA_32bit));
+        }
+    };
+
+    pub const Palette = struct {
+        RGBA_32bit: []Color,
+
+        extern fn LoadImagePalette(image: Image, maxPaletteSize: c_int, colorCount: [*c]c_int) [*c]Color;
+        /// Load colors palette from image as a Color array (RGBA - 32bit)
+        pub fn init(image: Image, maxPaletteSize: i32) Image.Error!Palette {
+            var len: c_int = 0;
+            const ptr = LoadImagePalette(image, maxPaletteSize, &len);
+            if (ptr == 0) return Image.Error.InvalidImage;
+            safety.load();
+            return .{ .RGBA_32bit = ptr[0..@intCast(len)] };
+        }
+
+        extern fn UnloadImagePalette(colors: [*c]Color) void;
+        /// Unload colors palette loaded with LoadImagePalette()
+        pub fn deinit(palette: Palette) void {
+            safety.unload();
+            UnloadImagePalette(@ptrCast(palette.RGBA_32bit));
+        }
+    };
 };
 
 pub const NPatch = extern struct {
@@ -1078,5 +1024,28 @@ pub const RenderTexture = extern struct {
     /// Ends drawing to render texture
     pub fn end(_: RenderTexture) void {
         EndTextureMode();
+    }
+};
+
+pub const BlendMode = enum(c_int) {
+    alpha = 0,
+    additive = 1,
+    multiplied = 2,
+    add_colors = 3,
+    subtract_colors = 4,
+    alpha_premultiply = 5,
+    custom = 6,
+    custom_separate = 7,
+
+    extern fn BeginBlendMode(mode: c_int) void;
+    /// Begin blending mode (alpha, additive, multiplied, subtract, custom)
+    pub fn begin(self: BlendMode) void {
+        BeginBlendMode(@intFromEnum(self));
+    }
+
+    extern fn EndBlendMode() void;
+    /// End blending mode (reset to default: alpha blending)
+    pub fn end() void {
+        EndBlendMode();
     }
 };

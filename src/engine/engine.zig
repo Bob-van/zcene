@@ -21,7 +21,7 @@ pub const ConfigFlags = rlib.ConfigFlags;
 // safety check in Debug and ReleaseSafe build modes
 
 const new = @import("../raylib/new/raylib.zig");
-const safety = new.safety;
+const safety = new.internal_debug_safety;
 
 /// Setup canvas (framebuffer) to start drawing
 pub fn beginDrawing() void {
