@@ -1,7 +1,6 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
 
 pub const InitPreset = struct {
     x: f32,
@@ -11,24 +10,24 @@ pub const InitPreset = struct {
 };
 
 pub fn TextBounded(comptime Renderer: type) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
-        presets: *const [API.preset_size]InitPreset,
+        presets: *const [rapi.preset_size]InitPreset,
         buffer: []u8,
         filled: [:0]u8,
-        position: engine.Vector2,
+        position: rlib.math.Vector2,
         font_size: f32,
         spacing: f32,
-        font: *const engine.Font,
-        color: engine.Color,
+        font: *const rlib.text.Font,
+        color: rlib.r2D.Color,
 
         pub const Preset = InitPreset;
 
-        pub fn init(buffer: [:0]u8, comptime fmt: []const u8, args: anytype, font: *const engine.Font, color: engine.Color, presets: *const [API.preset_size]Preset) !@This() {
-            const preset = presets[API.activePresetIndex()];
+        pub fn init(buffer: [:0]u8, comptime fmt: []const u8, args: anytype, font: *const rlib.text.Font, color: rlib.r2D.Color, presets: *const [rapi.preset_size]Preset) !@This() {
+            const preset = presets[rapi.activePresetIndex()];
             const text_buffer = buffer[0 .. buffer.len + 1];
-            API.log("Initializating UiText\n", .{});
+            rapi.log("Initializating UiText\n", .{});
             return .{
                 .buffer = text_buffer,
                 .presets = presets,
@@ -51,14 +50,20 @@ pub fn TextBounded(comptime Renderer: type) type {
         }
 
         pub fn draw(self: *const @This()) void {
-            engine.drawTextEx(self.font.*, self.filled, self.position, self.font_size, self.spacing, self.color);
+            self.font.drawTextEx(self.filled, self.position, self.font_size, self.spacing, self.color);
         }
 
         pub fn drawWithOffset(self: *const @This(), offset_x: f32, offset_y: f32) void {
-            engine.drawTextEx(self.font.*, self.filled, .{
-                .x = self.position.x + offset_x,
-                .y = self.position.y + offset_y,
-            }, self.font_size, self.spacing, self.color);
+            self.font.drawTextEx(
+                self.filled,
+                .{
+                    .x = self.position.x + offset_x,
+                    .y = self.position.y + offset_y,
+                },
+                self.font_size,
+                self.spacing,
+                self.color,
+            );
         }
     };
 }

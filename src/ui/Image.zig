@@ -1,7 +1,6 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
 
 pub const InitPreset = struct {
     x: f32,
@@ -11,28 +10,27 @@ pub const InitPreset = struct {
 };
 
 pub fn Image(comptime Renderer: type) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
-        presets: *const [API.preset_size]InitPreset,
-        position: engine.Vector2,
-        texture: engine.Texture2D,
+        presets: *const [rapi.preset_size]InitPreset,
+        position: rlib.math.Vector2,
+        texture: rlib.r2D.Texture,
 
         pub const Preset = InitPreset;
 
-        pub fn init(image: []const u8, presets: *const [API.preset_size]Preset) !@This() {
-            const preset = presets[API.activePresetIndex()];
-            var rlib_image = try engine.loadImageFromMemory(".png", image);
-            defer engine.unloadImage(rlib_image);
-            API.log("Image loaded successfully: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
-            engine.imageResizeNN(
-                &rlib_image,
+        pub fn init(image: []const u8, presets: *const [rapi.preset_size]Preset) !@This() {
+            const preset = presets[rapi.activePresetIndex()];
+            var rlib_image: rlib.r2D.Image = try .initMemory(".png", image);
+            defer rlib_image.deinit();
+            rapi.log("Image loaded successfully: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
+            rlib_image.resizeNN(
                 @intFromFloat(preset.width * window.scale),
                 @intFromFloat(preset.height * window.scale),
             );
-            API.log("Image resized to: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
-            const texture = try engine.loadTextureFromImage(rlib_image);
-            API.log("Texture created from image\n", .{});
+            rapi.log("Image resized to: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
+            const texture: rlib.r2D.Texture = try .initImage(rlib_image);
+            rapi.log("Texture created from image\n", .{});
             return .{
                 .position = .{
                     .x = preset.x * window.scale + @as(f32, @floatFromInt(window.left_padding)),
@@ -50,8 +48,8 @@ pub fn Image(comptime Renderer: type) type {
         }
 
         pub fn deinit(self: *@This()) void {
-            engine.unloadTexture(self.texture);
-            API.log("Texture unloaded\n", .{});
+            self.texture.deinit();
+            rapi.log("Texture unloaded\n", .{});
         }
 
         pub fn deinitGeneric(self: *@This(), _: std.mem.Allocator) void {
@@ -59,7 +57,7 @@ pub fn Image(comptime Renderer: type) type {
         }
 
         pub fn draw(self: *const @This()) void {
-            engine.drawTextureV(self.texture, self.position, engine.Color.white);
+            self.texture.drawV(self.position, .white);
         }
     };
 }

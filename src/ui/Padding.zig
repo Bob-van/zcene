@@ -1,21 +1,21 @@
 const std = @import("std");
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+
+const rlib = @import("../raylib/root.zig");
 
 /// Adds colored blocks to the edges of screen (when window size is not exact fit)
 pub fn Padding(comptime Renderer: type) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
-        color: engine.Color,
+        color: rlib.r2D.Color,
 
-        pub fn init(color: engine.Color) @This() {
+        pub fn init(color: rlib.r2D.Color) @This() {
             return .{
                 .color = color,
             };
         }
 
-        pub fn initAlloc(allocator: std.mem.Allocator, color: engine.Color) !*@This() {
+        pub fn initAlloc(allocator: std.mem.Allocator, color: rlib.r2D.Color) !*@This() {
             const ret = try allocator.create(@This());
             ret.* = init(color);
             return ret;
@@ -25,13 +25,13 @@ pub fn Padding(comptime Renderer: type) type {
 
         pub fn draw(self: @This()) void {
             // top
-            engine.drawRectangle(0, 0, window.real_width, window.top_padding, self.color);
+            rlib.draw.r2D.rectangle(0, 0, window.real_width, window.top_padding, self.color);
             // right
-            engine.drawRectangle(window.inner_width + window.left_padding, 0, window.right_padding, window.real_height, self.color);
+            rlib.draw.r2D.rectangle(window.inner_width + window.left_padding, 0, window.right_padding, window.real_height, self.color);
             // bot
-            engine.drawRectangle(0, window.inner_height + window.top_padding, window.real_width, window.bot_padding, self.color);
+            rlib.draw.r2D.rectangle(0, window.inner_height + window.top_padding, window.real_width, window.bot_padding, self.color);
             // left
-            engine.drawRectangle(0, 0, window.left_padding, window.real_width, self.color);
+            rlib.draw.r2D.rectangle(0, 0, window.left_padding, window.real_width, self.color);
         }
     };
 }

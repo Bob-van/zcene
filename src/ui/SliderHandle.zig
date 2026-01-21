@@ -1,7 +1,6 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
 
 pub const InitPreset = struct {
     width: f32,
@@ -9,34 +8,33 @@ pub const InitPreset = struct {
 };
 
 pub fn SliderHandle(comptime Renderer: type) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
-        presets: *const [API.preset_size]Preset,
-        texture: engine.Texture2D,
+        presets: *const [rapi.preset_size]Preset,
+        texture: rlib.r2D.Texture,
 
         pub const Preset = InitPreset;
 
-        pub fn init(image: []const u8, presets: *const [API.preset_size]Preset) !@This() {
-            const preset = presets[API.activePresetIndex()];
-            var rlib_image = try engine.loadImageFromMemory(".png", image);
-            defer engine.unloadImage(rlib_image);
-            API.log("Image loaded successfully: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
-            engine.imageResizeNN(
-                &rlib_image,
+        pub fn init(image: []const u8, presets: *const [rapi.preset_size]Preset) !@This() {
+            const preset = presets[rapi.activePresetIndex()];
+            var rlib_image: rlib.r2D.Image = try .initMemory(".png", image);
+            defer rlib_image.deinit();
+            rapi.log("Image loaded successfully: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
+            rlib_image.resizeNN(
                 @intFromFloat(preset.width * window.scale),
                 @intFromFloat(preset.height * window.scale),
             );
-            API.log("Image resized to: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
-            const texture = try engine.loadTextureFromImage(rlib_image);
-            API.log("Texture created from image\n", .{});
+            rapi.log("Image resized to: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
+            const texture: rlib.r2D.Texture = try .initImage(rlib_image);
+            rapi.log("Texture created from image\n", .{});
             return .{
                 .presets = presets,
                 .texture = texture,
             };
         }
 
-        pub fn initAlloc(allocator: std.mem.Allocator, image: []const u8, presets: *const [API.preset_size]Preset) !*@This() {
+        pub fn initAlloc(allocator: std.mem.Allocator, image: []const u8, presets: *const [rapi.preset_size]Preset) !*@This() {
             const ret = try allocator.create(@This());
             ret.* = try init(image, presets);
             return ret;
@@ -45,8 +43,8 @@ pub fn SliderHandle(comptime Renderer: type) type {
         pub fn draw(_: @This()) void {}
 
         pub fn deinit(self: *@This()) void {
-            engine.unloadTexture(self.texture);
-            API.log("Texture unloaded\n", .{});
+            self.texture.deinit();
+            rapi.log("Texture unloaded\n", .{});
         }
 
         pub fn deinitGeneric(self: *@This(), _: std.mem.Allocator) void {

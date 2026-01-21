@@ -1,7 +1,6 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
 
 pub const InitPreset = struct {
     x: f32,
@@ -11,22 +10,22 @@ pub const InitPreset = struct {
 };
 
 pub fn TextStatic(comptime Renderer: type) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
-        presets: *const [API.preset_size]InitPreset,
+        presets: *const [rapi.preset_size]InitPreset,
         text: [:0]const u8,
-        position: engine.Vector2,
+        position: rlib.math.Vector2,
         font_size: f32,
         spacing: f32,
-        font: *const engine.Font,
-        color: engine.Color,
+        font: *const rlib.text.Font,
+        color: rlib.r2D.Color,
 
         pub const Preset = InitPreset;
 
-        pub fn init(text: [:0]const u8, font: *const engine.Font, color: engine.Color, presets: *const [API.preset_size]Preset) @This() {
-            const preset = presets[API.activePresetIndex()];
-            API.log("Initializating ui.TextStatic\n", .{});
+        pub fn init(text: [:0]const u8, font: *const rlib.text.Font, color: rlib.r2D.Color, presets: *const [rapi.preset_size]Preset) @This() {
+            const preset = presets[rapi.activePresetIndex()];
+            rapi.log("Initializating ui.TextStatic\n", .{});
             return .{
                 .text = text,
                 .presets = presets,
@@ -44,14 +43,20 @@ pub fn TextStatic(comptime Renderer: type) type {
         pub fn deinitGeneric(_: *@This(), _: std.mem.Allocator) void {}
 
         pub fn draw(self: *const @This()) void {
-            engine.drawTextEx(self.font.*, self.text, self.position, self.font_size, self.spacing, self.color);
+            self.font.drawTextEx(self.text, self.position, self.font_size, self.spacing, self.color);
         }
 
         pub fn drawWithOffset(self: *const @This(), offset_x: f32, offset_y: f32) void {
-            engine.drawTextEx(self.font.*, self.text, .{
-                .x = self.position.x + offset_x,
-                .y = self.position.y + offset_y,
-            }, self.font_size, self.spacing, self.color);
+            self.font.drawTextEx(
+                self.text,
+                .{
+                    .x = self.position.x + offset_x,
+                    .y = self.position.y + offset_y,
+                },
+                self.font_size,
+                self.spacing,
+                self.color,
+            );
         }
     };
 }

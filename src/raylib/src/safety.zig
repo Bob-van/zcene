@@ -1,3 +1,5 @@
+const std = @import("std");
+
 const builtin = @import("builtin");
 
 pub const debug = builtin.mode == .Debug or builtin.mode == .ReleaseSafe;
@@ -19,6 +21,9 @@ pub fn closeWindow() void {
     if (debug) {
         if (!window) @panic("Window already closed!");
         window = false;
+        if (loaded != 0) {
+            std.debug.panic("Raylib left with {} loaded assets on exit!\n", .{loaded});
+        }
     }
 }
 

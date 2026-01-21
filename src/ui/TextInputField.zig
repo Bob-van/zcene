@@ -1,30 +1,29 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
 
 const TextValue = @import("TextInputFieldValue.zig").TextValue;
 
 pub fn TextInputField(comptime Renderer: type) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
         value: *TextValue,
-        font: *const engine.Font,
+        font: *const rlib.text.Font,
 
         cycles_down: u8 = 0,
         first_cycle: bool = true,
         selected: bool = false,
 
-        box_position: engine.Vector2,
-        box_size: engine.Vector2,
+        box_position: rlib.math.Vector2,
+        box_size: rlib.math.Vector2,
 
         box_border_thickness: f32,
 
-        text_position: engine.Vector2,
+        text_position: rlib.math.Vector2,
         text_font_size: f32,
         text_spacing: f32,
-        text_color: engine.Color,
+        text_color: rlib.r2D.Color,
 
         pub const Preset = struct {
             box_x: f32,
@@ -38,11 +37,11 @@ pub fn TextInputField(comptime Renderer: type) type {
             text_y: f32,
             text_font_size: f32,
             text_spacing: f32,
-            text_color: engine.Color,
+            text_color: rlib.r2D.Color,
         };
 
-        pub fn init(value: *TextValue, font: *const engine.Font, preset: Preset) @This() {
-            API.log("Initializating UiText\n", .{});
+        pub fn init(value: *TextValue, font: *const rlib.text.Font, preset: Preset) @This() {
+            rapi.log("Initializating UiText\n", .{});
             const tmp_font_size = preset.text_font_size * window.scale;
             const tmp_spacing = preset.text_spacing * window.scale;
             return .{
@@ -67,7 +66,7 @@ pub fn TextInputField(comptime Renderer: type) type {
             };
         }
 
-        pub fn initAlloc(allocator: std.mem.Allocator, value: *TextValue, font: *const engine.Font, preset: Preset) !*@This() {
+        pub fn initAlloc(allocator: std.mem.Allocator, value: *TextValue, font: *const rlib.text.Font, preset: Preset) !*@This() {
             const ret = try allocator.create(@This());
             ret.* = init(value, font, preset);
             return ret;
@@ -76,20 +75,20 @@ pub fn TextInputField(comptime Renderer: type) type {
         pub fn deinit(_: *const @This()) void {}
 
         pub fn draw(self: *@This()) void {
-            engine.drawRectangleV(self.box_position, self.box_size, engine.Color.red);
-            engine.drawRectangleV(
+            rlib.draw.r2D.rectangleV(self.box_position, self.box_size, rlib.r2D.Color.red);
+            rlib.draw.r2D.rectangleV(
                 self.box_position.addValue(self.box_border_thickness),
                 .{
                     .x = self.box_size.x - 2 * self.box_border_thickness,
                     .y = self.box_size.y - 2 * self.box_border_thickness,
                 },
-                engine.Color.light_gray,
+                .light_gray,
             );
-            engine.drawTextEx(self.font.*, self.value.getValueNullTerminated(), self.text_position, self.text_font_size, self.text_spacing, self.text_color);
+            self.font.drawTextEx(self.value.getValueNullTerminated(), self.text_position, self.text_font_size, self.text_spacing, self.text_color);
         }
 
-        pub fn checkIfSelected(self: *@This(), mouse: engine.Vector2) void {
-            self.selected = engine.checkCollisionPointRec(
+        pub fn checkIfSelected(self: *@This(), mouse: rlib.math.Vector2) void {
+            self.selected = rlib.collision.r2D.checkPointRec(
                 mouse,
                 .{
                     .x = self.box_position.x + self.box_border_thickness,
@@ -104,17 +103,17 @@ pub fn TextInputField(comptime Renderer: type) type {
         }
 
         pub fn isSubmited(self: *const @This()) bool {
-            return (self.selected and engine.isKeyPressed(.enter));
+            return (self.selected and rlib.io.keyboard.isPressed(.enter));
         }
 
         pub fn checkForInput(self: *@This()) void {
             if (self.selected) {
-                if (engine.isKeyDown(.left_control) and engine.isKeyPressed(.c)) {
-                    engine.setClipboardText(self.value.getValueNullTerminated());
+                if (rlib.io.keyboard.isDown(.left_control) and rlib.io.keyboard.isPressed(.c)) {
+                    rlib.io.clipboard.setText(self.value.getValueNullTerminated());
                     return;
                 }
-                if (engine.isKeyDown(.left_control) and engine.isKeyPressed(.v)) {
-                    const clipboardText = engine.getClipboardText();
+                if (rlib.io.keyboard.isDown(.left_control) and rlib.io.keyboard.isPressed(.v)) {
+                    const clipboardText = rlib.io.clipboard.getText();
                     var start: usize = 0;
                     var len: usize = 5;
                     while (len > 0) {
@@ -129,9 +128,9 @@ pub fn TextInputField(comptime Renderer: type) type {
                     }
                     return;
                 }
-                var pressed = engine.getCharPressed();
+                var pressed = rlib.io.keyboard.getPressedChar();
                 var pressed_encode_buffer: [4]u8 = undefined;
-                while (pressed > 0) : (pressed = engine.getCharPressed()) {
+                while (pressed > 0) : (pressed = rlib.io.keyboard.getPressedChar()) {
                     const len = std.unicode.utf8Encode(@intCast(pressed), &pressed_encode_buffer) catch continue;
                     if (self.value.value.len > self.value.curr_value_size + len) {
                         for (0..len) |i| {
@@ -140,7 +139,7 @@ pub fn TextInputField(comptime Renderer: type) type {
                         self.value.curr_value_size += len;
                     }
                 }
-                if (engine.isKeyDown(.backspace)) {
+                if (rlib.io.keyboard.isDown(.backspace)) {
                     if (self.cycles_down == 0) {
                         self.value.removeLastCharacter_Utf8();
                     }

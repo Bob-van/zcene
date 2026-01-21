@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const engine = @import("engine.zig");
+
+const rlib = @import("../raylib/root.zig");
 const api = @import("api.zig");
 const ScreenPreset = @import("../root.zig").ScreenPreset;
 const RenderableScene = @import("../root.zig").RenderableScene;
@@ -51,23 +52,19 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
             .activePresetIndex = getCurrentPresetIndex,
             .init = init,
             .deinit = deinit,
-            .initialRender = initialRender,
-            .sceneUnload = sceneUnload,
             .render = render,
-            .shouldWindowClose = wasWindowClosed,
             .requestNextScene = requestNextScene,
             .requestTermination = requestTermination,
-            .requestFpsCap = requestFpsCap,
-            .requestFpsCapUpdate = requestFpsCapUpdate,
+            .terminationRequested = terminationRequested,
         };
 
         /// Exposed Renderer API (constructed like this mainly for LSP reasons)
-        pub const API = api.API(@This());
+        pub const rapi = api.API(@This());
 
         const Types = blk: {
             var types: [scenes.len]type = undefined;
             for (scenes, 0..) |renderableScene, i| {
-                types[i] = renderableScene.SceneTypeGenerator(@This());
+                types[i] = renderableScene.Scene;
             }
             break :blk types;
         };
@@ -89,7 +86,7 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
             } });
         };
 
-        var window_opened = false;
+        var terminate = false;
 
         var current_scene: AccessEnum = undefined;
         var next_scene: AccessEnum = undefined;
@@ -99,8 +96,6 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
         var current_preset_id: usize = undefined;
 
         var window: api.Window = undefined;
-
-        var fps_cap: u31 = undefined;
 
         var last_update_micro: if (does_it_ever_update) i64 else void = undefined;
 
@@ -118,88 +113,17 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
             return current_preset_id;
         }
 
-        fn init(window_title: [:0]const u8, fps: ?u31) void {
-            if (builtin.mode == .Debug) {
-                engine.setTraceLogLevel(.warning);
-            } else {
-                engine.setTraceLogLevel(.err);
-            }
-            // open minimalized game window
-            engine.initWindow(1, 1, window_title);
-            // remember that window was opened
-            window_opened = true;
-            // get ID of monitor currently in use
-            const monitor_id = engine.getCurrentMonitor();
-
-            // get monitor scale
-            const screen_width = engine.getMonitorWidth(monitor_id);
-            const screen_height = engine.getMonitorHeight(monitor_id);
-            log("Device screen params recieved: {d} x {d}\n", .{ screen_width, screen_height });
-
-            const cap: u31 = fps orelse blk: {
-                // compute param for removal of repeating non 0 cost calls
-                const refresh_rate = engine.getMonitorRefreshRate(monitor_id);
-                log("Monitor supports up to: {} FPS\n", .{refresh_rate});
-                break :blk if (refresh_rate < 60) 60 else @intCast(refresh_rate);
-            };
-            log("Renderer targetting {} FPS\n", .{cap});
-
-            // compute param for removal of repeating non 0 cost calls
-            const window_width = @divFloor(screen_width, 4);
-            // compute param for removal of repeating non 0 cost calls
-            const window_height = @divFloor(screen_height, 4);
-
-            // move window
-            engine.setWindowPosition(window_width, window_height);
-
-            const position = engine.getWindowPosition();
-
-            if (position.x == 0 or position.y == 0) {
-                // ugly hack for Wayland
-                engine.closeWindow();
-                engine.initWindow(window_width * 2, window_height * 2, window_title);
-            } else {
-                // rescale window
-                engine.setWindowSize(
-                    window_width * 2,
-                    window_height * 2,
-                );
-            }
-
-            // allow resizeability
-            engine.setWindowState(.{ .window_resizable = true, .window_always_run = true });
-            // set prefered gameloop speed
-            requestFpsCapUpdate(cap);
-            // open audio device
-            engine.initAudioDevice();
-        }
-
-        fn deinit() void {
-            // close audio device
-            engine.closeAudioDevice();
-            // close the real window
-            engine.closeWindow();
-            // remember that window was closed
-            window_opened = false;
-
-            if (engine.getLoaded() != 0) {
-                log("Renderer was left with {} loaded assets on exit!\n", .{engine.getLoaded()});
-                if (builtin.mode == .Debug) unreachable;
-            }
-        }
-
-        fn wasWindowClosed() bool {
-            // TO DO: make ignore ESC at specific requests
-            // specidies whether was the real window closed or program thinks it was closed
-            return engine.windowShouldClose() or !window_opened;
-        }
-
-        fn initialRender(context: Context, starting_scene: AccessEnum) error{SceneInitFailed}!void {
+        fn init(context: Context, starting_scene: AccessEnum) !void {
             next_scene = starting_scene;
             if (!try update(context, false)) @panic("TO DO: determine behavior on init when window is minimalized.");
         }
 
-        pub fn sceneUnload(context: Context) void {
+        fn deinit(context: Context) void {
+            terminate = true;
+            sceneUnload(context);
+        }
+
+        fn sceneUnload(context: Context) void {
             switch (current_scene) {
                 inline else => |tag| {
                     @field(scene, scenes[@intFromEnum(tag)].name).deinit(context);
@@ -212,16 +136,11 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
         }
 
         fn requestTermination() void {
-            window_opened = false;
+            terminate = true;
         }
 
-        fn requestFpsCap() u31 {
-            return fps_cap;
-        }
-
-        fn requestFpsCapUpdate(new_cap: u31) void {
-            fps_cap = new_cap;
-            engine.setTargetFPS(@intCast(fps_cap));
+        fn terminationRequested() bool {
+            return terminate;
         }
 
         fn render(context: Context) error{ SceneInitFailed, SceneUpdateFailed, SceneRenderFailed }!void {
@@ -237,12 +156,7 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
                     }
                 },
             }
-            const should_render = try update(context, true);
-            // begin single frame render
-            engine.beginDrawing();
-            // reports end of single frame render
-            defer engine.endDrawing();
-            if (should_render) {
+            if (try update(context, true)) {
                 switch (current_scene) {
                     inline else => |tag| {
                         const preset = scenes[@intFromEnum(tag)];
@@ -316,8 +230,8 @@ pub fn Renderer(comptime presets: []const ScreenPreset, comptime scenes: []const
         }
 
         fn update(context: Context, comptime scene_exists: bool) error{SceneInitFailed}!bool {
-            const curr_width = engine.getScreenWidth();
-            const curr_height = engine.getScreenHeight();
+            const curr_width = rlib.monitor.screenWidth();
+            const curr_height = rlib.monitor.screenHeight();
             if (curr_width <= 0 or curr_height <= 0) return false;
             if (comptime scene_exists) {
                 if (curr_width == window.real_width and curr_height == window.real_height and current_scene == next_scene) return true;

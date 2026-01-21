@@ -1045,7 +1045,7 @@ pub const BlendMode = enum(c_int) {
 
     extern fn EndBlendMode() void;
     /// End blending mode (reset to default: alpha blending)
-    pub fn end() void {
+    pub fn end(_: BlendMode) void {
         EndBlendMode();
     }
 };

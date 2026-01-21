@@ -1,17 +1,16 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
 
 pub fn Border(comptime Renderer: type) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
-        presets: *const [API.preset_size]Preset,
-        position: engine.Vector2,
-        size: engine.Vector2,
+        presets: *const [rapi.preset_size]Preset,
+        position: rlib.math.Vector2,
+        size: rlib.math.Vector2,
         thickness: f32,
-        color: engine.Color,
+        color: rlib.r2D.Color,
 
         pub const Preset = struct {
             x: f32,
@@ -21,9 +20,9 @@ pub fn Border(comptime Renderer: type) type {
             thickness: f32,
         };
 
-        pub fn init(color: engine.Color, presets: *const [API.preset_size]Preset) @This() {
-            const preset = presets[API.activePresetIndex()];
-            API.log("Initializating UiBorder\n", .{});
+        pub fn init(color: rlib.r2D.Color, presets: *const [rapi.preset_size]Preset) @This() {
+            const preset = presets[rapi.activePresetIndex()];
+            rapi.log("Initializating UiBorder\n", .{});
             return .{
                 .presets = presets,
                 .position = .{
@@ -39,7 +38,7 @@ pub fn Border(comptime Renderer: type) type {
             };
         }
 
-        pub fn initAlloc(allocator: std.mem.Allocator, color: engine.Color, preset: Preset) !*@This() {
+        pub fn initAlloc(allocator: std.mem.Allocator, color: rlib.r2D.Color, preset: Preset) !*@This() {
             const ret = try allocator.create(@This());
             ret.* = init(color, preset);
             return ret;
@@ -51,7 +50,7 @@ pub fn Border(comptime Renderer: type) type {
             const border_width = self.thickness * 0 + self.size.x;
             const border_height = self.thickness * 0 + self.size.y;
             // top
-            engine.drawRectangleV(
+            rlib.draw.r2D.rectangleV(
                 .{
                     .x = self.position.x,
                     .y = self.position.y - self.thickness,
@@ -63,7 +62,7 @@ pub fn Border(comptime Renderer: type) type {
                 self.color,
             );
             // right
-            engine.drawRectangleV(
+            rlib.draw.r2D.rectangleV(
                 .{
                     .x = self.position.x + self.size.x,
                     .y = self.position.y,
@@ -75,7 +74,7 @@ pub fn Border(comptime Renderer: type) type {
                 self.color,
             );
             // bot
-            engine.drawRectangleV(
+            rlib.draw.r2D.rectangleV(
                 .{
                     .x = self.position.x,
                     .y = self.position.y + self.size.y,
@@ -87,7 +86,7 @@ pub fn Border(comptime Renderer: type) type {
                 self.color,
             );
             // left
-            engine.drawRectangleV(
+            rlib.draw.r2D.rectangleV(
                 .{
                     .x = self.position.x - self.thickness,
                     .y = self.position.y,

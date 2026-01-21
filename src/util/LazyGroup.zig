@@ -1,12 +1,12 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
+
 const GroupComponent = @import("GroupComponent.zig");
 
 pub fn LazyGroup(comptime Renderer: type) fn (comptime components: []const GroupComponent) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
         pub fn LazyGroup(comptime components: []const GroupComponent) type {
             comptime var Types: [components.len]type = undefined;
@@ -42,7 +42,7 @@ pub fn LazyGroup(comptime Renderer: type) fn (comptime components: []const Group
             } });
             return struct {
                 items: StorageStruct,
-                lazy_texture: engine.RenderTexture2D,
+                lazy_texture: rlib.r2D.RenderTexture,
 
                 pub const AccessEnum = CAccessEnum;
                 pub const StorageStruct = CStorageStruct;
@@ -53,12 +53,12 @@ pub fn LazyGroup(comptime Renderer: type) fn (comptime components: []const Group
                 };
 
                 pub fn init(self: *@This()) !void {
-                    self.lazy_texture = try engine.loadRenderTexture(window.real_width, window.real_height);
+                    self.lazy_texture = try .init(window.real_width, window.real_height);
                 }
 
                 /// deinitializes texture, but not the components
                 pub fn deinitTexture(self: *@This()) void {
-                    engine.unloadRenderTexture(self.lazy_texture);
+                    self.lazy_texture.deinit();
                 }
 
                 /// deinitializes texture and internal components
@@ -75,15 +75,14 @@ pub fn LazyGroup(comptime Renderer: type) fn (comptime components: []const Group
 
                 pub fn draw(self: *@This(), changed: bool) void {
                     if (changed) {
-                        API.log("Lazy group rerendered content!\n", .{});
-                        engine.beginTextureMode(self.lazy_texture);
-                        defer engine.endTextureMode();
+                        rapi.log("Lazy group rerendered content!\n", .{});
+                        self.lazy_texture.begin();
+                        defer self.lazy_texture.end();
                         inline for (0..components.len) |i| {
                             @field(self.items, components[i].name).draw();
                         }
                     }
-                    engine.drawTextureRec(
-                        self.lazy_texture.texture,
+                    self.lazy_texture.texture.drawRec(
                         .init(0, 0, @floatFromInt(window.real_width), @floatFromInt(-window.real_height)),
                         .init(0, 0),
                         .white,

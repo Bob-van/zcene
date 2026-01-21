@@ -1,9 +1,9 @@
 const std = @import("std");
 
-const engine = @import("../engine/engine.zig");
+const rlib = @import("root").rlib;
 
 volume: f32,
-music: engine.Sound,
+music: rlib.audio.Sound,
 
 comptime {
     // When analized (aka. imported by other code and used) it trips the compiler!

@@ -1,7 +1,4 @@
-/// EXPOSED ONLY BECAUSE YOU MIGHT WANT TO IMPLEMENT YOUR OWN STUFF
-///
-/// (for now used to expose some internal data types)
-pub const BackingEngine = @import("engine/engine.zig");
+pub const rlib = @import("raylib/root.zig");
 
 pub const ScreenPreset = struct {
     width: f32,
@@ -19,13 +16,13 @@ pub const ScreenPreset = struct {
 
 pub const RenderableScene = struct {
     name: [:0]const u8,
-    SceneTypeGenerator: fn (type) type,
+    Scene: type,
     updates_per_s: comptime_int,
 
-    pub fn init(name: [:0]const u8, SceneTypeGenerator: fn (type) type, updates_per_s: comptime_int) @This() {
+    pub fn init(name: [:0]const u8, Scene: type, updates_per_s: comptime_int) @This() {
         return .{
             .name = name,
-            .SceneTypeGenerator = SceneTypeGenerator,
+            .Scene = Scene,
             .updates_per_s = updates_per_s,
         };
     }
@@ -66,7 +63,7 @@ pub fn Init(comptime presets: []const ScreenPreset, comptime scenes: []const Ren
 
 const std = @import("std");
 test "raylib integration (compile errors)" {
-    std.testing.refAllDeclsRecursive(@import("raylib/new/raylib.zig"));
+    std.testing.refAllDeclsRecursive(rlib);
 }
 
 test "raylib integration coverage" {
@@ -74,7 +71,7 @@ test "raylib integration coverage" {
 
     const cwd = std.fs.cwd();
 
-    var raylib_dir = try cwd.openDir("src/raylib/", .{});
+    var raylib_dir = try cwd.openDir("src/raylib/old/", .{});
     defer raylib_dir.close();
 
     var line_writer = std.io.Writer.Allocating.init(allocator);
@@ -118,7 +115,7 @@ test "raylib integration coverage" {
         }
     }
 
-    var new_dir = try raylib_dir.openDir("new/", .{ .iterate = true });
+    var new_dir = try cwd.openDir("src/raylib/src/", .{ .iterate = true });
     defer new_dir.close();
 
     var public_externs: usize = 0;

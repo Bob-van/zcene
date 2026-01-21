@@ -1,15 +1,14 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
 
 pub fn Button(comptime Renderer: type) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
-        presets: *const [API.preset_size]Preset,
-        position: engine.Vector2,
-        texture: engine.Texture2D,
+        presets: *const [rapi.preset_size]Preset,
+        position: rlib.math.Vector2,
+        texture: rlib.r2D.Texture,
         hovered: bool,
 
         pub const Preset = struct {
@@ -19,21 +18,20 @@ pub fn Button(comptime Renderer: type) type {
             height: f32,
         };
 
-        const hover_color = engine.Color.init(200, 200, 200, 255);
+        const hover_color: rlib.r2D.Color = .init(200, 200, 200, 255);
 
-        pub fn init(image: []const u8, presets: *const [API.preset_size]Preset) !@This() {
-            const preset = presets[API.activePresetIndex()];
-            var rlib_image = try engine.loadImageFromMemory(".png", image);
-            defer engine.unloadImage(rlib_image);
-            API.log("Image loaded successfully: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
-            engine.imageResizeNN(
-                &rlib_image,
+        pub fn init(image: []const u8, presets: *const [rapi.preset_size]Preset) !@This() {
+            const preset = presets[rapi.activePresetIndex()];
+            var rlib_image: rlib.r2D.Image = try .initMemory(".png", image);
+            defer rlib_image.deinit();
+            rapi.log("Image loaded successfully: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
+            rlib_image.resizeNN(
                 @intFromFloat(preset.width * window.scale),
                 @intFromFloat(preset.height * window.scale),
             );
-            API.log("Image resized to: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
-            const texture = try engine.loadTextureFromImage(rlib_image);
-            API.log("Texture created from image\n", .{});
+            rapi.log("Image resized to: {d}x{d}\n", .{ rlib_image.width, rlib_image.height });
+            const texture: rlib.r2D.Texture = try .initImage(rlib_image);
+            rapi.log("Texture created from image\n", .{});
             return .{
                 .presets = presets,
                 .position = .{
@@ -52,8 +50,8 @@ pub fn Button(comptime Renderer: type) type {
         }
 
         pub fn deinit(self: *@This()) void {
-            engine.unloadTexture(self.texture);
-            API.log("Texture unloaded\n", .{});
+            self.texture.deinit();
+            rapi.log("Texture unloaded\n", .{});
         }
 
         pub fn deinitGeneric(self: *@This(), _: std.mem.Allocator) void {
@@ -61,25 +59,27 @@ pub fn Button(comptime Renderer: type) type {
         }
 
         pub fn draw(self: *const @This()) void {
-            engine.drawTextureV(self.texture, self.position, engine.Color.white);
+            self.texture.drawV(self.position, .white);
             if (self.hovered) {
-                engine.beginBlendMode(.alpha);
-                engine.drawTextureV(self.texture, self.position, hover_color);
-                engine.endBlendMode();
+                const blend: rlib.r2D.BlendMode = .alpha;
+                blend.begin();
+                self.texture.drawV(self.position, hover_color);
+                blend.end();
             }
         }
 
-        pub fn drawExt(self: *const @This(), position: engine.Vector2) void {
-            engine.drawTextureV(self.texture, position, engine.Color.white);
+        pub fn drawEx(self: *const @This(), position: rlib.math.Vector2) void {
+            self.texture.drawV(self.position, .white);
             if (self.hovered) {
-                engine.beginBlendMode(.alpha);
-                engine.drawTextureV(self.texture, position, hover_color);
-                engine.endBlendMode();
+                const blend: rlib.r2D.BlendMode = .alpha;
+                blend.begin();
+                self.texture.drawV(position, hover_color);
+                blend.end();
             }
         }
 
-        pub fn isPressed(self: *const @This(), mouse: engine.Vector2) bool {
-            return engine.checkCollisionPointRec(
+        pub fn isPressed(self: *const @This(), mouse: rlib.math.Vector2) bool {
+            return rlib.r2D.collision.checkPointRec(
                 mouse,
                 .{
                     .x = self.position.x,
@@ -90,9 +90,9 @@ pub fn Button(comptime Renderer: type) type {
             );
         }
 
-        pub fn checkForHover(self: *@This(), mouse: engine.Vector2) bool {
+        pub fn checkForHover(self: *@This(), mouse: rlib.math.Vector2) bool {
             const tmp = self.hovered;
-            self.hovered = if (engine.checkCollisionPointRec(
+            self.hovered = if (rlib.r2D.collision.checkPointRec(
                 mouse,
                 .{
                     .x = self.position.x,

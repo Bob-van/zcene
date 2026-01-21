@@ -1,13 +1,11 @@
-const api = @import("../engine/api.zig");
-
 pub fn TextInputFieldValue(comptime Renderer: type) type {
-    const API = api.API(Renderer);
+    const rapi = @import("../engine/api.zig").API(Renderer);
     return struct {
         value: []u8,
         curr_value_size: usize,
 
         pub fn init(text_buffer: []u8) @This() {
-            API.log("Initializating UiTextValue\n", .{});
+            rapi.log("Initializating UiTextValue\n", .{});
             return .{
                 .value = text_buffer,
                 .curr_value_size = 0,

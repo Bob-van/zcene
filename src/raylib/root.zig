@@ -1,0 +1,15 @@
+pub const r2D = @import("src/2D.zig");
+pub const r3D = @import("src/3D.zig");
+pub const audio = @import("src/audio.zig");
+pub const camera = @import("src/camera.zig");
+pub const collision = @import("src/collision.zig");
+pub const draw = @import("src/draw.zig");
+pub const frame = @import("src/frame.zig");
+pub const io = @import("src/io.zig");
+pub const math = @import("src/math.zig");
+pub const monitor = @import("src/monitor.zig");
+pub const random = @import("src/random.zig");
+pub const internal_debug_safety = @import("src/safety.zig");
+pub const text = @import("src/text.zig");
+pub const util = @import("src/util.zig");
+pub const window = @import("src/window.zig");

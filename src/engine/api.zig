@@ -1,6 +1,3 @@
-const engine = @import("engine.zig");
-pub const TraceLogLevel = engine.TraceLogLevel;
-
 pub const Window = struct {
     real_width: i32,
     real_height: i32,
@@ -19,16 +16,12 @@ pub fn FnTable(Renderer: type) type {
         window: fn () *const Window,
         preset_size: usize,
         activePresetIndex: fn () usize,
-        init: fn ([:0]const u8, ?u31) void,
-        deinit: fn () void,
-        initialRender: fn (Renderer.Context, Renderer.AccessEnum) error{SceneInitFailed}!void,
-        sceneUnload: fn (Renderer.Context) void,
+        init: fn (Renderer.Context, Renderer.AccessEnum) error{SceneInitFailed}!void,
+        deinit: fn (Renderer.Context) void,
         render: fn (Renderer.Context) error{ SceneInitFailed, SceneUpdateFailed, SceneRenderFailed }!void,
-        shouldWindowClose: fn () bool,
         requestNextScene: fn (Renderer.AccessEnum) void,
         requestTermination: fn () void,
-        requestFpsCap: fn () u31,
-        requestFpsCapUpdate: fn (u31) void,
+        terminationRequested: fn () bool,
     };
 }
 
@@ -60,26 +53,14 @@ pub fn API(Renderer: type) type {
         /// (null means use monitor refresh rate)
         ///
         /// IMPORTANT: requires deinit() to be called before exiting!
-        pub fn init(title: [:0]const u8, fps_cap: ?u31) void {
-            table.init(title, fps_cap);
+        pub fn init(ctx: Renderer.Context, scene: Renderer.AccessEnum) error{SceneInitFailed}!void {
+            return table.init(ctx, scene);
         }
         /// Deinitializes window and all internal resources.
         ///
         /// IMPORTANT: all other render functions stop working afterwards!
-        pub fn deinit() void {
-            table.deinit();
-        }
-        /// Makes first render of provided starting scene, initializes internal scene.
-        ///
-        /// IMPORTANT: from this point onwards one scene is always loaded in renderer, requires sceneUnload() to be called before exiting!
-        pub fn initialRender(ctx: Renderer.Context, scene: Renderer.AccessEnum) error{SceneInitFailed}!void {
-            return table.initialRender(ctx, scene);
-        }
-        /// Unloads currently loaded scene inside the renderer.
-        ///
-        /// IMPORTANT: unloading scene twice or before loading it is UB!
-        pub fn sceneUnload(ctx: Renderer.Context) void {
-            table.sceneUnload(ctx);
+        pub fn deinit(ctx: Renderer.Context) void {
+            table.deinit(ctx);
         }
         /// Renders scene, if new scene is requested loads it first.
         ///
@@ -91,12 +72,7 @@ pub fn API(Renderer: type) type {
         pub fn render(ctx: Renderer.Context) error{ SceneInitFailed, SceneUpdateFailed, SceneRenderFailed }!void {
             return table.render(ctx);
         }
-        /// Returns whether window termination was requested.
-        ///
-        /// (escape key pressed or window close icon clicked)
-        pub fn shouldWindowClose() bool {
-            return table.shouldWindowClose();
-        }
+
         /// Requests new scene to be loaded on next render() call.
         ///
         /// (safely overwrites previous requests, if they happen before render() call)
@@ -107,15 +83,11 @@ pub fn API(Renderer: type) type {
         pub fn requestTermination() void {
             table.requestTermination();
         }
-        /// Requests to change current FPS cap.
+        /// Returns whether window termination was requested.
         ///
-        /// (0 means no limit)
-        pub fn requestFpsCapUpdate(fps: u31) void {
-            table.requestFpsCapUpdate(fps);
-        }
-
-        pub fn requestFpsCap() u31 {
-            return table.requestFpsCap();
+        /// (escape key pressed or window close icon clicked)
+        pub fn terminationRequested() bool {
+            return table.terminationRequested();
         }
     };
 }

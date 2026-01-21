@@ -1,21 +1,20 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
 
 pub fn Slider(comptime Renderer: type) type {
-    const API = api.API(Renderer);
+    const rapi = @import("../engine/api.zig").API(Renderer);
     const SliderHandle = @import("SliderHandle.zig").SliderHandle(Renderer);
-    const window = API.window();
+    const window = rapi.window();
     return struct {
-        presets: *const [API.preset_size]Preset,
+        presets: *const [rapi.preset_size]Preset,
         handle: *const SliderHandle,
-        position: engine.Vector2,
-        size: engine.Vector2,
-        hitbox: engine.Vector2,
+        position: rlib.math.Vector2,
+        size: rlib.math.Vector2,
+        hitbox: rlib.math.Vector2,
         value: f32,
-        filled_color: engine.Color,
-        empty_color: engine.Color,
+        filled_color: rlib.r2D.Color,
+        empty_color: rlib.r2D.Color,
 
         pub const Preset = struct {
             x: f32,
@@ -26,8 +25,8 @@ pub fn Slider(comptime Renderer: type) type {
             hitbox_increase_height: f32,
         };
 
-        pub fn init(handle: *const SliderHandle, value: f32, filled_color: engine.Color, empty_color: engine.Color, presets: *const [API.preset_size]Preset) @This() {
-            const preset = presets[API.activePresetIndex()];
+        pub fn init(handle: *const SliderHandle, value: f32, filled_color: rlib.r2D.Color, empty_color: rlib.r2D.Color, presets: *const [rapi.preset_size]Preset) @This() {
+            const preset = presets[rapi.activePresetIndex()];
             return .{
                 .presets = presets,
                 .handle = handle,
@@ -56,7 +55,7 @@ pub fn Slider(comptime Renderer: type) type {
         }
 
         pub fn draw(self: *const @This()) void {
-            engine.drawRectangleV(
+            rlib.draw.r2D.rectangleV(
                 self.position,
                 .{
                     .x = self.size.x,
@@ -64,7 +63,7 @@ pub fn Slider(comptime Renderer: type) type {
                 },
                 self.empty_color,
             );
-            engine.drawRectangleV(
+            rlib.draw.r2D.rectangleV(
                 self.position,
                 .{
                     .x = self.value * self.size.x,
@@ -72,18 +71,17 @@ pub fn Slider(comptime Renderer: type) type {
                 },
                 self.filled_color,
             );
-            engine.drawTextureV(
-                self.handle.texture,
+            self.handle.texture.drawV(
                 .{
                     .x = self.position.x + self.value * self.size.x - @as(f32, @floatFromInt(@divFloor(self.handle.texture.width, 2))),
                     .y = self.position.y + self.size.y / 2 - @as(f32, @floatFromInt(@divFloor(self.handle.texture.height, 2))),
                 },
-                engine.Color.white,
+                .white,
             );
         }
 
-        pub fn checkForMove(self: *@This(), mouse: engine.Vector2) bool {
-            if (engine.checkCollisionPointRec(
+        pub fn checkForMove(self: *@This(), mouse: rlib.math.Vector2) bool {
+            if (rlib.collision.r2D.checkPointRec(
                 mouse,
                 .{
                     .x = self.position.x - self.hitbox.x,
@@ -100,7 +98,7 @@ pub fn Slider(comptime Renderer: type) type {
                 } else {
                     self.value = tmp / self.size.x;
                 }
-                API.log("value is: {}%\n", .{@as(i32, @intFromFloat(self.value * 100))});
+                rapi.log("value is: {}%\n", .{@as(i32, @intFromFloat(self.value * 100))});
                 return true;
             }
             return false;

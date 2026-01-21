@@ -1,25 +1,25 @@
 const std = @import("std");
 
-const api = @import("../engine/api.zig");
-const engine = @import("../engine/engine.zig");
+const rlib = @import("../raylib/root.zig");
+
 pub fn Rectangle(comptime Renderer: type) type {
-    const API = api.API(Renderer);
-    const window = API.window();
+    const rapi = @import("../engine/api.zig").API(Renderer);
+    const window = rapi.window();
     return struct {
-        position: engine.Vector2,
-        size: engine.Vector2,
-        color: engine.Color,
+        position: rlib.math.Vector2,
+        size: rlib.math.Vector2,
+        color: rlib.r2D.Color,
 
         pub const Preset = struct {
             x: f32,
             y: f32,
             width: f32,
             height: f32,
-            color: engine.Color,
+            color: rlib.r2D.Color,
         };
 
         pub fn init(preset: Preset) @This() {
-            API.log("Initializating UiRectangle\n");
+            rapi.log("Initializating UiRectangle\n");
             return .{
                 .position = .{
                     .x = preset.x * window.scale + @as(f32, @floatFromInt(window.left_padding)),
@@ -42,7 +42,7 @@ pub fn Rectangle(comptime Renderer: type) type {
         pub fn deinitGeneral(_: *const @This(), _: std.mem.Allocator) void {}
 
         pub fn draw(self: *@This()) void {
-            engine.drawRectangleV(self.position, self.size, self.color);
+            rlib.draw.r2D.rectangleV(self.position, self.size, self.color);
         }
     };
 }
